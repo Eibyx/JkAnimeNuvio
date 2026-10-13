@@ -149,12 +149,18 @@ test("very similar titles of different shows never match", async () => {
   await assert.rejects(resolve("series", "kitsu:904:1"), { code: "ANIME_NOT_FOUND" })
 })
 
-test("a JKAnime entry longer than the requested cut is not used for it", async () => {
-  // Kitsu lists part 1 (12 episodes); JKAnime only has the 24-episode whole.
+test("cours: a merged JKAnime entry serves part 1 by full title, never a partial match", async () => {
+  // Kitsu lists the first cour (12 episodes); JKAnime has both cours in one entry.
   const anime = { "spy-x-family": { title: "Spy x Family", type: "Serie", emitted: "Abr 9 de 2022", episodes: 25, status: "Concluido" } }
   installFakeNet({ anime })
   common.cache.set("kitsu:905", Promise.resolve({ source: "kitsu", id: "905", format: "TV", episodes: 12, startYear: 2022, titles: ["Spy x Family"] }))
-  await assert.rejects(resolve("series", "kitsu:905:1"), { code: "ANIME_NOT_FOUND" })
+  assert.deepEqual([(await resolve("series", "kitsu:905:1")).slug], ["spy-x-family"])
+  // Same main name and year, but only a partial match and a longer entry: another cut.
+  resetAll()
+  const jojo = { "jojo-no-kimyou-na-bouken-stardust-crusaders": { title: "JoJo no Kimyou na Bouken: Stardust Crusaders", type: "Serie", emitted: "Abr 5 de 2014", episodes: 48, status: "Concluido" } }
+  installFakeNet({ anime: jojo })
+  common.cache.set("kitsu:906", Promise.resolve({ source: "kitsu", id: "906", format: "TV", episodes: 24, startYear: 2014, titles: ["JoJo no Kimyou na Bouken: Egypt-hen"] }))
+  await assert.rejects(resolve("series", "kitsu:906:1"), { code: "ANIME_NOT_FOUND" })
 })
 
 test("link evidence: missing data is never agreement", () => {

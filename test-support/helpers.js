@@ -184,11 +184,13 @@ function response(body, { status = 200, url, headers = {} } = {}) {
 function installFakeNet({
   anime = DEFAULT_ANIME, servers = defaultServers, blocked = false, cinemeta, anilist, calls = [],
   tmdb = TMDB, tvdbData = TVDB, down = [], stats = { tvdbLogins: 0, requests: [] }, kitsu = {}, relations = {}, searchPage, intercept,
-} = {}) {
+} = {}, httpModule = http) {
   const kitsuData = { ...KITSU, ...kitsu }
   const relationData = { ...RELATIONS, ...relations }
   const cinemetaFixtures = { "series/tt7441658": require("../test/fixtures/cinemeta-black-clover.json"), ...(cinemeta || {}) }
-  http.setFetch(async (href, opts = {}) => {
+  // httpModule: lib/utils/http.js of the code under test (scripts/evaluate.js
+  // installs the same network into an older checkout).
+  httpModule.setFetch(async (href, opts = {}) => {
     const url = new URL(href)
     calls.push(url.href)
     stats.requests.push({ url: url.href, headers: opts.headers || {}, body: opts.body })
