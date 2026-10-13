@@ -1,5 +1,70 @@
 # Historial de versiones
 
+## 🎌 JKAnimeNuvio v0.2.1 — Mejoras de identificación y compatibilidad
+
+Actualización de **JKAnimeNuvio v0.2.0** centrada en reconocer animes cuyos títulos se escriben
+de forma distinta en cada base de datos. No cambia la instalación ni la configuración: basta con
+actualizar (ver *Cómo actualizar JKAnimeNuvio* en el README).
+
+### ✨ Mejoras
+
+- **Identificación universal de títulos.** Un mismo anime puede llamarse *Aoashi 2nd Season* en
+  Kitsu, *Aoashi Season 2* en AniList, *Ao Ashi S2* en ani.zip y *Ao Ashi Season 2* en JKAnime.
+  JKAnimeNuvio ahora reconoce estas variantes sin ninguna correspondencia fija para un anime
+  concreto.
+- **Integración mejorada entre Kitsu, AniList y ani.zip.** Las peticiones `kitsu:`, `mal:` y
+  `anilist:` reúnen los títulos de la **misma entrada** en las tres fuentes:
+  - Se enlazan mediante los *mappings* de Kitsu, yuna y ani.zip.
+  - Las bases de relaciones también se consultan por el id de AniList.
+- **Búsqueda mediante títulos alternativos.** JKAnime se busca primero por el título base, sin
+  marcador de temporada (por ejemplo, `ao ashi`), y después por los títulos completos.
+- **Normalización de espacios.** Los títulos que solo difieren en los espacios (`Aoashi` / `Ao Ashi`,
+  `Dragonball` / `Dragon Ball`) se consideran iguales. Es una igualdad exacta y no rebaja el umbral
+  de coincidencia.
+- **Mejor reconocimiento de temporadas.** `2nd Season`, `Season 2`, `S2` y `2` se tratan como la
+  misma temporada, y la temporada 1 nunca se sirve cuando se pide la 2.
+- **Validación del año de emisión.** Una entrada enlazada desde otra base de datos solo se usa si
+  coinciden su formato y su año de inicio. La entrada de JKAnime se sigue verificando por año.
+- **Mensajes más claros para enlaces eliminados.**
+  - Tras identificar el episodio, cada servidor sin enlace muestra el motivo: vídeo eliminado
+    (HTTP 404), bloqueo, tiempo agotado…
+  - Una línea resume cuántos servidores dieron enlace.
+  - El registro indica qué se buscó en JKAnime y cuántos resultados hubo.
+- **Nuevas pruebas de regresión** (87 en total), con respuestas reales de Kitsu, AniList, yuna y
+  ani.zip:
+  - `kitsu:49883`, `anilist:191788` y `mal:61603` resuelven a `ao-ashi-season-2`, episodios 1 y 2.
+  - Nunca se consulta la temporada de 2022, y un episodio que aún no existe devuelve una lista vacía.
+
+### ✅ Comprobado por el desarrollador (Android + Termux + Nuvio)
+
+| Anime | Resultado | Enlaces en Nuvio |
+|---|---|---|
+| Ao Ashi T2E1, `kitsu:49883` | Identificado: `ao-ashi-season-2`, episodio 1 | 8 |
+| Ao Ashi T2E1, `anilist:191788` | Identificado | 8 |
+| Black Clover T2E1 | Correcto | 7 |
+| Gensou Suikoden T1E1 | Correcto | 7 |
+
+Para Ao Ashi T2E1 aparecen enlaces de JKAnime (HLS), Streamwish (HLS), Vidhide (HLS), VOE (HLS y MP4),
+Mixdrop (MP4), MP4Upload (MP4) y Streamtape (MP4).
+
+### ⚠️ Limitaciones conocidas
+
+- **Filemoon: `Invalid key length`.** El extractor descifra la respuesta de Filemoon con AES-256-GCM,
+  que exige una clave de 32 bytes. Cuando Filemoon envía una clave de otra longitud, ese servidor no
+  da enlace. Los demás servidores no se ven afectados.
+  - *Propuesta para una versión futura:* elegir AES-128/192/256-GCM según la longitud de la clave
+    (16, 24 o 32 bytes) y descartar el resto, con una prueba para cada caso.
+- **JKAnime AJAX: HTTP 419.** La consulta interna que cuenta los episodios envía el token CSRF, pero
+  no la cookie de sesión de la ficha del anime, y JKAnime la rechaza. Solo se usa cuando la ficha no
+  muestra el total de episodios y **no impide encontrar el episodio**.
+  - *Propuesta para una versión futura:* reutilizar la cookie de sesión de la ficha en esa consulta,
+    o eliminar la consulta si la ficha siempre muestra el total.
+- Siguen vigentes las limitaciones de v0.2.0:
+  - Posibles bloqueos de Cloudflare.
+  - Enlaces temporales que caducan.
+  - Dependencia de servicios externos para identificar.
+  - Diferencias entre numeraciones de temporadas.
+
 ## 🎌 JKAnimeNuvio v0.2.0 — Primera versión estable
 
 Primera versión estable de **JKAnimeNuvio**, un addon **solo de streams** que ofrece enlaces de

@@ -1,0 +1,137 @@
+{
+ "kitsu:anime:49883": {
+  "data": {
+   "id": "49883",
+   "type": "anime",
+   "attributes": {
+    "canonicalTitle": "Aoashi 2nd Season",
+    "titles": {
+     "en_jp": "Aoashi 2nd Season",
+     "ja_jp": "アオアシ 第2期"
+    },
+    "abbreviatedTitles": [],
+    "subtype": "TV",
+    "startDate": "2026-10-04",
+    "episodeCount": null
+   }
+  }
+ },
+ "kitsu:mappings:49883": {
+  "data": [
+   {
+    "type": "mappings",
+    "attributes": {
+     "externalSite": "anilist/anime",
+     "externalId": "191788"
+    }
+   },
+   {
+    "type": "mappings",
+    "attributes": {
+     "externalSite": "myanimelist/anime",
+     "externalId": "61603"
+    }
+   }
+  ]
+ },
+ "yuna:kitsu:49883": {
+  "anilist": 191788,
+  "myanimelist": 61603,
+  "kitsu": 49883,
+  "anidb": 19318,
+  "imdb": null,
+  "themoviedb": null,
+  "thetvdb": null
+ },
+ "yuna:anilist:191788": {
+  "anilist": 191788,
+  "myanimelist": 61603,
+  "kitsu": 49883,
+  "anidb": 19318,
+  "imdb": null,
+  "themoviedb": null,
+  "thetvdb": null
+ },
+ "anizip:kitsu_id:49883": {
+  "titles": {
+   "x-jat": "Ao Ashi S2",
+   "ja": "アオアシ Season2",
+   "en": "Aoashi Season 2"
+  },
+  "mappings": {
+   "animeplanet_id": "aoashi-season-2",
+   "kitsu_id": 49883,
+   "mal_id": 61603,
+   "type": "TV",
+   "anilist_id": 191788,
+   "anisearch_id": 20477,
+   "anidb_id": 19318,
+   "notifymoe_id": null,
+   "livechart_id": 13151,
+   "thetvdb_id": 407840,
+   "imdb_id": null,
+   "themoviedb_id": "126437"
+  }
+ },
+ "anizip:anilist_id:191788": {
+  "titles": {
+   "x-jat": "Ao Ashi S2",
+   "ja": "アオアシ Season2",
+   "en": "Aoashi Season 2"
+  },
+  "mappings": {
+   "animeplanet_id": "aoashi-season-2",
+   "kitsu_id": 49883,
+   "mal_id": 61603,
+   "type": "TV",
+   "anilist_id": 191788,
+   "anisearch_id": 20477,
+   "anidb_id": 19318,
+   "notifymoe_id": null,
+   "livechart_id": 13151,
+   "thetvdb_id": 407840,
+   "imdb_id": null,
+   "themoviedb_id": "126437"
+  }
+ },
+ "anilist:media": [
+  {
+   "id": 191788,
+   "idMal": 61603,
+   "format": "TV",
+   "episodes": 24,
+   "season": "FALL",
+   "seasonYear": 2026,
+   "startDate": {
+    "year": 2026
+   },
+   "title": {
+    "romaji": "Aoashi 2nd Season",
+    "english": "Aoashi Season 2",
+    "native": "アオアシ 第2期"
+   },
+   "synonyms": []
+  },
+  {
+   "id": 134732,
+   "idMal": 49052,
+   "format": "TV",
+   "episodes": 24,
+   "season": "SPRING",
+   "seasonYear": 2022,
+   "startDate": {
+    "year": 2022
+   },
+   "title": {
+    "romaji": "Aoashi",
+    "english": "Aoashi",
+    "native": "アオアシ"
+   },
+   "synonyms": [
+    "AOASHI แข็งเด็กหัวใจนักสู้",
+    "أواشي",
+    "Ao Ashi - Playmaker"
+   ]
+  }
+ ]
+}
