@@ -1,0 +1,126 @@
+{
+ "yuna:anilist:187316": {
+  "anilist": 187316,
+  "myanimelist": 61140,
+  "kitsu": 50988,
+  "anidb": 19194,
+  "imdb": "tt42938834",
+  "themoviedb": 285710,
+  "thetvdb": 482279
+ },
+ "yuna:anilist:97940": {
+  "anilist": 97940,
+  "myanimelist": 34572,
+  "kitsu": 13209,
+  "anidb": 12665,
+  "imdb": "tt7441658",
+  "themoviedb": 73223,
+  "thetvdb": 331753
+ },
+ "anizip:anilist_id:187316": {
+  "mappings": {
+   "animeplanet_id": "gensou-suikoden",
+   "kitsu_id": null,
+   "mal_id": 61140,
+   "type": "TV",
+   "anilist_id": 187316,
+   "anisearch_id": 20276,
+   "anidb_id": 19194,
+   "notifymoe_id": null,
+   "livechart_id": 13068,
+   "thetvdb_id": 460979,
+   "imdb_id": null,
+   "themoviedb_id": "285710"
+  }
+ },
+ "anizip:themoviedb_id:285710": {
+  "mappings": {
+   "animeplanet_id": "gensou-suikoden",
+   "kitsu_id": null,
+   "mal_id": 61140,
+   "type": "TV",
+   "anilist_id": 187316,
+   "anisearch_id": 20276,
+   "anidb_id": 19194,
+   "notifymoe_id": null,
+   "livechart_id": 13068,
+   "thetvdb_id": 460979,
+   "imdb_id": null,
+   "themoviedb_id": "285710"
+  }
+ },
+ "anizip:anilist_id:97940": {
+  "mappings": {
+   "animeplanet_id": "black-clover",
+   "kitsu_id": 13209,
+   "mal_id": 34572,
+   "type": "TV",
+   "anilist_id": 97940,
+   "anisearch_id": 12131,
+   "anidb_id": 12665,
+   "notifymoe_id": null,
+   "livechart_id": 2478,
+   "thetvdb_id": 331753,
+   "imdb_id": "tt7441658",
+   "themoviedb_id": "73223"
+  }
+ },
+ "anizip:themoviedb_id:73223": {
+  "mappings": {
+   "animeplanet_id": "black-clover-jump-festa-2016-special",
+   "kitsu_id": 12625,
+   "mal_id": 33950,
+   "type": "OVA",
+   "anilist_id": 87528,
+   "anisearch_id": 11742,
+   "anidb_id": 12351,
+   "notifymoe_id": null,
+   "livechart_id": 2294,
+   "thetvdb_id": 331753,
+   "imdb_id": "tt7441658",
+   "themoviedb_id": "73223"
+  }
+ },
+ "anizip:thetvdb_id:331753": {
+  "mappings": {
+   "animeplanet_id": "black-clover-jump-festa-2016-special",
+   "kitsu_id": 12625,
+   "mal_id": 33950,
+   "type": "OVA",
+   "anilist_id": 87528,
+   "anisearch_id": 11742,
+   "anidb_id": 12351,
+   "notifymoe_id": null,
+   "livechart_id": 2294,
+   "thetvdb_id": 331753,
+   "imdb_id": "tt7441658",
+   "themoviedb_id": "73223"
+  }
+ },
+ "anizip:thetvdb_id:482279": null,
+ "yuna:anilist:87528": {
+  "anilist": 87528,
+  "myanimelist": 33950,
+  "kitsu": 12625,
+  "anidb": 12351,
+  "imdb": "tt7441658",
+  "themoviedb": 73223,
+  "thetvdb": 331753
+ },
+ "anizip:anilist_id:87528": {
+  "mappings": {
+   "animeplanet_id": "black-clover-jump-festa-2016-special",
+   "kitsu_id": 12625,
+   "mal_id": 33950,
+   "type": "OVA",
+   "anilist_id": 87528,
+   "anisearch_id": 11742,
+   "anidb_id": 12351,
+   "notifymoe_id": null,
+   "livechart_id": 2294,
+   "thetvdb_id": 331753,
+   "imdb_id": "tt7441658",
+   "themoviedb_id": "73223"
+  }
+ }
+}
