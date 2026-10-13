@@ -190,3 +190,10 @@ test("a changed search page is reported as such, not as 'not found'", async () =
   installFakeNet({ searchPage: () => "<html><body><h1>Mantenimiento</h1></body></html>" })
   await assert.rejects(resolve("series", "kitsu:44629:1"), { code: "PARSER_CHANGED" })
 })
+
+test("a Cloudflare challenge stops the search at the first query", async () => {
+  const calls = []
+  installFakeNet({ blocked: true, calls })
+  await assert.rejects(resolve("series", "kitsu:50761:1"), { name: "BlockedError" })
+  assert.equal(calls.filter((u) => u.includes("jkanime.net")).length, 1)
+})

@@ -34,6 +34,7 @@
   "scripts": {
     "start": "node index.js",
     "test": "node --test",
+    "diagnose": "node scripts/diagnose.js",
     "live-check": "node scripts/live-check.js"
   },
   "dependencies": {
