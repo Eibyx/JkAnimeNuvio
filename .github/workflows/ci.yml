@@ -1,13 +1,32 @@
 name: CI
+
+# When the tests run:
+# - push to main: every merge or direct change to main (also feeds the README badge).
+# - pull_request to main: every development branch (feature/*, fix/*…) is tested
+#   through its PR, once per commit. Branch pushes are not tested separately, so
+#   the same commit does not run twice.
+# - workflow_dispatch: manual run for a branch that has no PR yet (Actions → CI →
+#   "Run workflow").
 on:
-  pull_request:
   push:
-    branches-ignore:
-      - main
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer commit on the same PR/branch cancels the run that is still going.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node-version: [20, 22]
     steps:
