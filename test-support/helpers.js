@@ -179,10 +179,11 @@ function response(body, { status = 200, url, headers = {} } = {}) {
  *   anime: JKAnime entries (slug -> info); search: list of slugs the search returns
  *   blocked: serve the Cloudflare challenge for every jkanime.net request
  *   searchPage: (query) => HTML served instead of the generated search page
+ *   intercept: (href, opts) => response (or a falsy value to fall through)
  */
 function installFakeNet({
   anime = DEFAULT_ANIME, servers = defaultServers, blocked = false, cinemeta, anilist, calls = [],
-  tmdb = TMDB, tvdbData = TVDB, down = [], stats = { tvdbLogins: 0, requests: [] }, kitsu = {}, relations = {}, searchPage,
+  tmdb = TMDB, tvdbData = TVDB, down = [], stats = { tvdbLogins: 0, requests: [] }, kitsu = {}, relations = {}, searchPage, intercept,
 } = {}) {
   const kitsuData = { ...KITSU, ...kitsu }
   const relationData = { ...RELATIONS, ...relations }
@@ -191,6 +192,8 @@ function installFakeNet({
     const url = new URL(href)
     calls.push(url.href)
     stats.requests.push({ url: url.href, headers: opts.headers || {}, body: opts.body })
+    const intercepted = intercept && await intercept(url.href, opts)
+    if (intercepted) return intercepted
     const isDown = down.find((d) => url.hostname.includes(d))
     if (isDown) return response("Service Unavailable", { status: 503 })
     if (url.hostname === "v3-cinemeta.strem.io") {
