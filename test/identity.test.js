@@ -1,10 +1,10 @@
 const { test, beforeEach, afterEach } = require("node:test")
 const assert = require("node:assert/strict")
 const { installFakeNet, resetAll, setCredentials, DEFAULT_ANIME, TMDB, TVDB, FAKE } = require("../test-support/helpers")
-const { resolve } = require("../lib/resolver")
-const { identify } = require("../lib/identity")
+const { resolve } = require("../lib/identification/resolver")
+const { identify } = require("../lib/identification/identity")
 const tmdb = require("../lib/providers/tmdb")
-const { redactUrl } = require("../lib/http")
+const { redactUrl } = require("../lib/utils/http")
 
 beforeEach(resetAll)
 afterEach(resetAll)

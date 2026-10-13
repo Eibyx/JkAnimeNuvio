@@ -1042,17 +1042,28 @@ reproducción.
 **Estructura**
 
 ```text
-index.js               Arranque del servidor
-lib/app.js             Rutas HTTP y caché de respuestas
-lib/manifest.js        Manifiesto stream-only
-lib/identity.js        Identidad a partir de TMDB / TVDB / Cinemeta + verificación de AniList
-lib/providers/         tmdb, tvdb, anilist, kitsu, cinemeta, relations (yuna, ani.zip)
-lib/resolver.js        ID → entrada y episodio de JKAnime
-lib/jkanime.js         Búsqueda, ficha y página de episodio de JKAnime
-lib/extractors.js      Servidores de vídeo → enlaces MP4/HLS
-lib/streams.js         Objetos stream del protocolo Stremio
-test/                  Pruebas (node:test)
-scripts/live-check.js  Verificación real
+index.js                        Arranque: lee .env e inicia el servidor
+lib/
+├── app.js                      Servidor HTTP (Express): rutas, CORS y caché de respuestas
+├── stremio/                    Protocolo de addons de Stremio
+│   ├── manifest.js             Manifiesto stream-only (resources: [stream], catalogs: [])
+│   └── streams.js              Objetos stream (MP4/HLS, cabeceras, orden, sin duplicados)
+├── identification/             Identificación de anime
+│   ├── identity.js             Identidad desde TMDB / TVDB / Cinemeta + verificación de AniList
+│   ├── resolver.js             ID → entrada y episodio de JKAnime (temporadas y numeraciones)
+│   ├── titles.js               Normalización de títulos y marcadores de temporada
+│   └── episodes.js             IDs de Stremio y numeración absoluta
+├── providers/                  Proveedores de metadatos internos (solo para identificar)
+│   └── tmdb, tvdb, anilist, kitsu, cinemeta, relations (yuna, ani.zip), common
+├── jkanime/                    JKAnime: única fuente de vídeo
+│   ├── site.js                 Búsqueda, ficha y página de episodio
+│   └── extractors.js           Servidores de vídeo → enlaces MP4/HLS
+└── utils/
+    ├── cache.js                Caché TTL con deduplicación de peticiones
+    └── http.js                 HTTP con timeouts, protección SSRF y ocultación de credenciales
+test/                           Pruebas (node:test) y datos de prueba (fixtures/)
+test-support/helpers.js         Red simulada para las pruebas
+scripts/live-check.js           Verificación real contra los servicios
 ```
 
 **Reglas de identificación**

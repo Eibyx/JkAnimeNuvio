@@ -8,10 +8,10 @@
  * JKAnime / video host HTML (follows the selectors of the upstream addon).
  */
 process.env.NODE_ENV = "test"
-const http = require("../lib/http")
+const http = require("../lib/utils/http")
 const common = require("../lib/providers/common")
 const tvdb = require("../lib/providers/tvdb")
-const jkanime = require("../lib/jkanime")
+const jkanime = require("../lib/jkanime/site")
 const { responseCache } = require("../lib/app")
 
 // Dummy credentials, never real ones.

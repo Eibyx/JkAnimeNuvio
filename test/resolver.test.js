@@ -1,7 +1,7 @@
 const { test, beforeEach, afterEach } = require("node:test")
 const assert = require("node:assert/strict")
 const { installFakeNet, resetAll, DEFAULT_ANIME, setCredentials } = require("../test-support/helpers")
-const { resolve } = require("../lib/resolver")
+const { resolve } = require("../lib/identification/resolver")
 const common = require("../lib/providers/common")
 
 beforeEach(resetAll)

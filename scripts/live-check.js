@@ -6,11 +6,11 @@
  * Usage: npm run live-check [-- tt42938834:1:1 anilist:187316:1 ...]
  */
 require("dotenv").config()
-const { identify } = require("../lib/identity")
-const jkanime = require("../lib/jkanime")
-const { resolve } = require("../lib/resolver")
-const { getStreams } = require("../lib/streams")
-const { parseVideoId } = require("../lib/episodes")
+const { identify } = require("../lib/identification/identity")
+const jkanime = require("../lib/jkanime/site")
+const { resolve } = require("../lib/identification/resolver")
+const { getStreams } = require("../lib/stremio/streams")
+const { parseVideoId } = require("../lib/identification/episodes")
 
 const configured = (v) => (process.env[v] ? "configured" : "not set")
 const ids = process.argv.slice(2)

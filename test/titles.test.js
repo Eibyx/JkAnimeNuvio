@@ -1,7 +1,7 @@
 const { test } = require("node:test")
 const assert = require("node:assert/strict")
-const { parseTitle, scoreTitle, normalize, isLatinTitle } = require("../lib/titles")
-const { parseVideoId, toAbsolute } = require("../lib/episodes")
+const { parseTitle, scoreTitle, normalize, isLatinTitle } = require("../lib/identification/titles")
+const { parseVideoId, toAbsolute } = require("../lib/identification/episodes")
 
 test("normalize strips accents, punctuation and case", () => {
   assert.equal(normalize("Kimetsu no Yaiba: Yūkaku-hen!"), "kimetsu no yaiba yukaku hen")
