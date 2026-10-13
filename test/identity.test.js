@@ -131,6 +131,12 @@ test("Black Clover numberings: tmdb, tvdb (default order) and tvdb-absolute", as
   assert.deepEqual([abs.slug, abs.episode], ["black-clover-tv", 52])
 })
 
+test("a season the chosen numbering does not have is never guessed (tvdb-absolute T2E1)", async () => {
+  setCredentials()
+  installFakeNet()
+  await assert.rejects(resolve("series", "tt7441658:2:1", { numbering: "tvdb-absolute" }), /only has 170 episodes|no JKAnime entry/)
+})
+
 test("tmdb:/tvdb: ids use their own numbering", async () => {
   setCredentials()
   installFakeNet()
