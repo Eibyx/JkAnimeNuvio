@@ -1,14 +1,14 @@
 const { test, beforeEach, afterEach } = require("node:test")
 const assert = require("node:assert/strict")
-const { installFakeNet, resetAll, DEFAULT_ANIME } = require("../test-support/helpers")
+const { installFakeNet, resetAll, DEFAULT_ANIME, setCredentials } = require("../test-support/helpers")
 const { resolve } = require("../lib/resolver")
-const metadata = require("../lib/metadata")
+const common = require("../lib/providers/common")
 
 beforeEach(resetAll)
-afterEach(() => { resetAll(); delete process.env.TMDB_API_READ_TOKEN })
+afterEach(resetAll)
 
 test("Cinemeta layout of Black Clover (real fixture): S1=170, S2=13 from 2026, specials in S0", () => {
-  const layout = metadata.seasonLayout(require("./fixtures/cinemeta-black-clover.json").meta.videos)
+  const layout = common.seasonLayout(require("./fixtures/cinemeta-black-clover.json").meta.videos)
   assert.equal(layout[1].count, 170)
   assert.equal(layout[1].startYear, 2017)
   assert.equal(layout[2].count, 13)
@@ -20,7 +20,7 @@ test("Black Clover S1E1 / S1E170 map to the 170-episode entry", async () => {
   installFakeNet()
   assert.deepEqual(
     (({ slug, episode, via }) => ({ slug, episode, via }))(await resolve("series", "tt7441658:1:1")),
-    { slug: "black-clover-tv", episode: 1, via: "season" })
+    { slug: "black-clover-tv", episode: 1, via: "season/cinemeta" })
   assert.equal((await resolve("series", "tt7441658:1:170")).episode, 170)
 })
 
@@ -44,15 +44,11 @@ test("Black Clover S0 specials are never mapped silently", async () => {
 })
 
 test("TMDB numbering: Black Clover S2E1 (2018) is absolute episode 52 of the TV entry", async () => {
-  process.env.TMDB_API_READ_TOKEN = "test"
+  setCredentials({ tvdb: false })
   installFakeNet()
-  // TMDB splits the 170 episodes in 4 seasons.
-  metadata.cache.set("tmdb:layout:tt7441658", Promise.resolve({
-    1: { count: 51, startYear: 2017 }, 2: { count: 51, startYear: 2018 },
-    3: { count: 52, startYear: 2019 }, 4: { count: 16, startYear: 2020 },
-  }))
+  // TMDB (synthetic fixture) splits the 170 episodes in 4 seasons.
   const r = await resolve("series", "tt7441658:2:1", { numbering: "tmdb" })
-  assert.deepEqual([r.slug, r.episode, r.via], ["black-clover-tv", 52, "absolute"])
+  assert.deepEqual([r.slug, r.episode, r.via], ["black-clover-tv", 52, "absolute/tmdb"])
   const last = await resolve("series", "tt7441658:4:16", { numbering: "tmdb" })
   assert.deepEqual([last.slug, last.episode], ["black-clover-tv", 170])
 })
@@ -73,7 +69,7 @@ test("continuous JKAnime entry: S2E3 becomes episode 15 when S1 has 12", async (
     anilist: { data: { Page: { media: [] } } },
   })
   const r = await resolve("series", "tt9999999:2:3")
-  assert.deepEqual([r.slug, r.episode, r.via], ["kaiju-no-8", 15, "absolute"])
+  assert.deepEqual([r.slug, r.episode, r.via], ["kaiju-no-8", 15, "absolute/cinemeta"])
 })
 
 test("no confident title match returns nothing", async () => {
@@ -91,7 +87,7 @@ test("JKAnime Cloudflare challenge surfaces as BlockedError", async () => {
 
 test("kitsu ids use the per-season Kitsu entry and its own episode number", async () => {
   installFakeNet()
-  metadata.cache.set("kitsu:13209", Promise.resolve({ source: "kitsu", id: "13209", format: "TV", episodes: 170, startYear: 2017, titles: ["Black Clover"] }))
+  common.cache.set("kitsu:13209", Promise.resolve({ source: "kitsu", id: "13209", format: "TV", episodes: 170, startYear: 2017, titles: ["Black Clover"] }))
   const r = await resolve("series", "kitsu:13209:12")
   assert.deepEqual([r.slug, r.episode], ["black-clover-tv", 12])
 })

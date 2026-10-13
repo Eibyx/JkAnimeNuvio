@@ -12,8 +12,9 @@ No está afiliado a JKAnime. Deriva de
 
 - Expone únicamente el recurso `stream`. No hay `catalog` ni `meta`: los metadatos los
   aporta el addon que ya uses (Cinemeta, TMDB, Kitsu…).
-- Usa JKAnime como única fuente de vídeo. Cinemeta, AniList, Kitsu y (opcionalmente)
-  TMDB se consultan solo para **identificar** el anime y el episodio que pide el cliente.
+- Usa JKAnime como única fuente de vídeo. TMDB, TVDB, AniList, Kitsu, Cinemeta y las bases de
+  relaciones (yuna, ani.zip) se consultan solo para **identificar** el anime y el episodio
+  que pide el cliente.
 - Devuelve solo URLs `http(s)` directas a `.mp4` o `.m3u8` (más Pixeldrain y Streamtape,
   que sirven el archivo sin extensión). Nunca devuelve `externalUrl` ni páginas embed.
 
@@ -22,65 +23,134 @@ No está afiliado a JKAnime. Deriva de
 ```bash
 npm ci
 npm test
+cp .env.example .env   # opcional: añade tus credenciales de TMDB/TVDB
 PORT=3000 npm start
 ```
 
 Instala en Nuvio o Stremio con `https://<tu-servidor>/manifest.json`.
 
-Nuvio, en Android o iOS, necesita una URL accesible desde el dispositivo (HTTPS público o
-una IP de tu red local). El servidor debe poder acceder a jkanime.net: JKAnime responde con
-un desafío de Cloudflare a muchas IPs de centros de datos, y en ese caso el addon devuelve
-`{"streams": []}`.
+### Android con Termux
+
+1. Instala [Termux](https://f-droid.org/packages/com.termux/) desde F-Droid.
+2. En Termux:
+   ```bash
+   pkg update && pkg install nodejs-lts git
+   git clone -b feature/jkanime-stream-only https://github.com/Eibyx/JkAnimeNuvio.git
+   cd JkAnimeNuvio
+   npm ci --omit=dev
+   cp .env.example .env
+   nano .env          # TMDB_API_READ_TOKEN, TVDB_API_KEY…
+   npm start
+   ```
+3. En Nuvio instala `http://127.0.0.1:3000/manifest.json`. El servidor corre en el mismo
+   teléfono, así que no hay que exponer ningún puerto.
+4. Para mantenerlo activo con la pantalla apagada, ejecuta `termux-wake-lock` y desactiva
+   la optimización de batería de Termux.
+5. Comprobación real: `npm run live-check -- tt42938834:1:1 anilist:187316:1`. Muestra qué
+   proveedores están configurados (nunca sus valores), la identidad encontrada con sus
+   evidencias y los streams.
+
+`.env` está en `.gitignore`: no lo subas a GitHub. Las credenciales solo viajan a sus APIs
+y se ocultan (`***`) en mensajes de error y logs.
+
+## Variables de entorno
+
+Todas son opcionales. Consulta [`.env.example`](.env.example).
+
+| Variable | Uso |
+|---|---|
+| `TMDB_API_READ_TOKEN` | TMDB, token de lectura (Bearer). Preferido. |
+| `TMDB_API_KEY` | TMDB, clave v3 (si no hay token). |
+| `TVDB_API_KEY` | TheTVDB API v4. |
+| `TVDB_SUBSCRIBER_PIN` | PIN de suscriptor, solo para claves de usuario de TVDB. |
+| `METADATA_PROVIDER` | `auto` (TMDB → TVDB, más Cinemeta), o `tmdb`, `tvdb`, `cinemeta`. |
+| `CINEMETA_ENABLED` | `false` desactiva Cinemeta; la numeración por defecto pasa a ser TMDB/TVDB. |
+| `RELATIONS_ENABLED` | `false` desactiva yuna y ani.zip. |
+| `*_TIMEOUT_MS` | Límite de tiempo por proveedor. |
+
+Un proveedor sin credenciales, caído o que responde 401 se omite; los demás siguen
+funcionando.
 
 ## IDs admitidos
 
-| ID | Ejemplo | Numeración |
+| ID | Ejemplo | Numeración por defecto |
 |---|---|---|
-| IMDb (Cinemeta) | `tt7441658:2:1` | Temporadas de Cinemeta |
-| IMDb con TMDB | `/numbering=tmdb/manifest.json` + `tt7441658:2:1` | Temporadas de TMDB (requiere `TMDB_API_READ_TOKEN`) |
-| TMDB | `tmdb:73223:2:1` | Temporadas de TMDB (requiere `TMDB_API_READ_TOKEN`) |
-| Kitsu | `kitsu:13209:5` | Episodio de esa entrada de Kitsu |
-| MyAnimeList / AniList | `mal:34572:5`, `anilist:97940:5` | Episodio de esa entrada |
-| Película IMDb | `tt…` (tipo `movie`) | — |
+| IMDb | `tt7441658:2:1` | `auto`: Cinemeta si conoce la serie; si no, TMDB; si no, TVDB |
+| TMDB | `tmdb:73223:2:1` | TMDB (requiere credencial de TMDB) |
+| TVDB | `tvdb:482279:1:1` | TVDB, orden por defecto (requiere `TVDB_API_KEY`) |
+| Kitsu / MAL / AniList | `kitsu:13209:5`, `mal:61140:1`, `anilist:187316:1` | Episodio de esa entrada |
+| Película IMDb/TMDB | `tt…`, `tmdb:…` (tipo `movie`) | — |
+
+### Elegir la numeración explícitamente
+
+El proveedor que identifica la serie **no** decide la numeración. Se elige en la URL del
+manifiesto. Cada combinación tiene su propio `id`, así que puede instalarse junto a la
+normal:
+
+| URL | Significado |
+|---|---|
+| `/manifest.json` | `numbering=auto`, `mapping=auto` (comportamiento de v0.1) |
+| `/numbering=tmdb/manifest.json` | Temporadas de TMDB |
+| `/numbering=tvdb/manifest.json` | Orden por defecto de TVDB |
+| `/numbering=tvdb-absolute/manifest.json` | También `tvdb-official`, `-dvd`, `-alternate`, `-regional` |
+| `/mapping=season/manifest.json` | Solo entradas independientes por temporada (estilo AniList) |
+| `/mapping=absolute/manifest.json` | Solo numeración continua en la entrada principal de JKAnime |
+
+Se combinan: `/numbering=tmdb&mapping=absolute/manifest.json`.
 
 ## Cómo se identifica el episodio
 
-1. **Metadatos del ID.** Se obtienen el nombre y la estructura de temporadas: número de
-   episodios y año de inicio de cada temporada.
-2. **Títulos alternativos.** AniList aporta los títulos romaji, inglés y sinónimos (solo
-   los de alfabeto latino) de la entrada que se emitió el mismo año que la temporada
-   pedida. Así se encuentran nombres como "Black Clover 2nd Season" o "Shingeki no Kyojin".
-3. **Búsqueda en JKAnime.** Se busca con esos títulos y cada resultado se puntúa con
-   coeficiente de Dice sobre el nombre normalizado. Los marcadores de temporada, parte,
-   película, OVA o especial deben coincidir. Los números que forman parte del nombre
-   ("Kaiju No. 8", "Mob Psycho 100") no se interpretan como temporada.
-4. **Verificación.** Se abre la ficha del candidato en JKAnime y se comprueba el año de
-   emisión (±1), el tipo y el número de episodios. Si dos candidatos empatan, no se
-   devuelve nada.
-5. **Numeración continua.** Si JKAnime no tiene una entrada propia para la temporada N,
-   se prueba la entrada principal con el número absoluto (suma de las temporadas
-   anteriores + episodio), siempre que la ficha tenga suficientes episodios.
-6. **Página del episodio.** Si JKAnime redirige a la ficha o muestra otro número de
-   episodio, no se devuelve ningún stream.
+1. **Identidad** (`lib/identity.js`). Para IMDb se consultan TMDB (`/find`) y Cinemeta en
+   paralelo, y TVDB (`/search/remoteid`) solo si TMDB no da una respuesta fiable (o si se
+   pide numeración TVDB). Solo cuenta el índice de IMDb **del propio proveedor**:
+   - Si un proveedor devuelve otro IMDb id, o varias series, su respuesta se descarta.
+   - Si dos proveedores se contradicen (ids distintos, o nombres y años distintos), se
+     descarta el de menor prioridad (TMDB > TVDB > Cinemeta).
+2. **Correspondencias con AniList.** yuna y ani.zip **proponen** ids a partir de los de
+   TMDB/TVDB. Una propuesta solo se acepta si la entrada de AniList tiene un formato
+   compatible (TV/ONA para series, MOVIE para películas), su título coincide y, además,
+   coincide el año o lo confirma una segunda base de datos. Ejemplo real: las dos bases
+   asignan Black Clover a AniList 87528 (un especial de 2016); el addon lo rechaza.
+3. **Títulos.** Nombres de los proveedores (canónicos), títulos alternativos y traducidos
+   de TMDB/TVDB, y títulos y sinónimos de AniList de la entrada emitida el mismo año que la
+   temporada pedida. Los títulos japoneses nativos se usan para buscar en AniList.
+4. **JKAnime.** Igual que en v0.1: se puntúan los títulos, se verifica el año en la ficha y,
+   si hay ambigüedad, no se devuelve nada. Hay numeración continua de respaldo.
+5. **Página del episodio.** Debe coincidir el número de episodio.
 
-Las temporadas 0 (especiales y OVAs) no se asignan.
+Si Cinemeta **falla** (no si simplemente desconoce la serie), `auto` no cambia en silencio
+a TMDB: devuelve vacío durante un minuto. Las identidades se guardan en caché 6 h (24 h las
+correspondencias) y solo 60 s si algún proveedor falló.
+
+### Gensou Suikoden (`tt42938834`), datos reales del 13‑10‑2026
+
+| Fuente | Resultado |
+|---|---|
+| Cinemeta | `{}`: no la conoce |
+| TheTVDB 482279 (`/series/gensou-suikoden`) | Enlaza `imdb.com/title/tt42938834`; títulos "Suikoden: The Anime", "Gensou Suikoden" |
+| TMDB 285710 ("Suikoden: The Anime", 2026) | La página pública no muestra enlace a IMDb |
+| yuna (AniList 187316) | imdb tt42938834, tmdb 285710, tvdb 482279 |
+| ani.zip (AniList 187316) | tmdb 285710, tvdb 460979 (404 en TVDB: dato obsoleto), sin imdb |
+| AniList 187316 | "Gensou Suikoden", TV, otoño 2026, sinónimo "Suikoden: The Anime" |
+
+Sin credenciales, `tt42938834` no se puede identificar (ningún servicio público permite
+buscar por IMDb), y el addon no adivina. Con `TVDB_API_KEY`, TVDB resuelve el IMDb id a la
+serie 482279. Con `TMDB_*` se consulta TMDB primero; si TMDB llegara a enlazar el IMDb id,
+TVDB ni se consultaría. No se ha añadido ninguna correspondencia manual.
 
 ### Black Clover (`tt7441658`)
 
-Datos reales de Cinemeta (13‑10‑2026): T1 = 170 episodios (2017‑2021), T2 = 13 episodios
-desde el 03‑10‑2026 y T0 = 19 especiales. TMDB divide los 170 episodios en 4 temporadas
-(51/51/52/16).
+Datos reales de Cinemeta: T1 = 170 episodios (2017‑2021), T2 = 13 episodios desde el
+03‑10‑2026, T0 = 19 especiales. TMDB divide los 170 en 4 temporadas (51/51/52/16).
 
 | Petición | Resultado |
 |---|---|
 | `tt7441658:1:1` … `:1:170` | `black-clover-tv` ep. 1…170 |
-| `tt7441658:2:1` (Cinemeta) | entrada de la 2.ª temporada (2026), ep. 1. **Nunca** `black-clover-tv/1` ni `/171` |
+| `tt7441658:2:1` (`auto`, Cinemeta; también con TMDB/TVDB configurados) | entrada de la 2.ª temporada (2026), ep. 1 |
 | `tt7441658:2:1` sin entrada 2026 en JKAnime | vacío (171 > 170) |
-| `tt7441658:2:1` con `numbering=tmdb` | `black-clover-tv` ep. 52 |
+| `tt7441658:2:1` con `numbering=tmdb` o `numbering=tvdb` | `black-clover-tv` ep. 52 |
+| `tt7441658:1:52` con `numbering=tvdb-absolute` | `black-clover-tv` ep. 52 |
 | `tt7441658:0:N` | vacío |
-
-Los slugs exactos de JKAnime (`black-clover-tv`, etc.) **no se han podido comprobar** en
-directo; en las pruebas se usan HTML sintéticos.
 
 ## Servidores
 
@@ -94,15 +164,13 @@ Las URLs de los embeds proceden de HTML de terceros. Por eso solo se aceptan des
 
 ## Pruebas
 
-- `npm test`: pruebas **sin red** (`node:test`). Los datos de Cinemeta y AniList son
-  copias recortadas de respuestas reales. El HTML de JKAnime y de los servidores es
-  **sintético**.
-- `npm run live-check [-- tt7441658:2:1 …]`: comprobación **real** contra Cinemeta, AniList
-  y JKAnime. Muestra los errores tal cual, por ejemplo el bloqueo de Cloudflare.
-
-## Variables de entorno
-
-Consulta [`.env.example`](.env.example). Ninguna es obligatoria.
+- `npm test`: pruebas **sin red** (`node:test`).
+  - **Reales** (copias recortadas del 13‑10‑2026): Cinemeta, búsquedas de AniList, yuna y
+    ani.zip.
+  - **Sintéticas**: TMDB y TVDB (sin credenciales en este entorno; siguen la forma de sus
+    APIs públicas con los ids y títulos reales), y el HTML de JKAnime y de los servidores.
+  - Las credenciales de prueba son ficticias.
+- `npm run live-check [-- ids…]`: comprobación **real** contra los proveedores y JKAnime.
 
 ## Despliegue
 

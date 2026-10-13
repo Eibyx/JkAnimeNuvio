@@ -1,6 +1,6 @@
 const { test, before, after, beforeEach } = require("node:test")
 const assert = require("node:assert/strict")
-const { installFakeNet, resetAll } = require("../test-support/helpers")
+const { installFakeNet, resetAll, setCredentials, FAKE } = require("../test-support/helpers")
 const { createApp } = require("../lib/app")
 
 let server
@@ -114,4 +114,40 @@ test("responses are cached per id", async () => {
   const n = calls.length
   await get("/stream/series/tt7441658:1:7.json")
   assert.equal(calls.length, n)
+})
+
+test("Gensou Suikoden: tt42938834:1:1 and anilist:187316:1 return the same valid streams", async () => {
+  setCredentials()
+  installFakeNet()
+  const a = await (await get("/stream/series/tt42938834:1:1.json")).json()
+  const b = await (await get("/stream/anime/anilist:187316:1.json")).json()
+  assert.ok(a.streams.length >= 3)
+  assert.deepEqual(a.streams.map((s) => s.url), b.streams.map((s) => s.url))
+  for (const s of a.streams) {
+    assert.match(s.url, /^https:\/\/.+\.(m3u8|mp4)(\?|$)/)
+    assert.ok(s.url.includes("gensou-suikoden"))
+    assert.equal(s.behaviorHints.notWebReady, true)
+    assert.equal(typeof s.name, "string")
+  }
+})
+
+test("manifest with credentials: stream-only, tmdb:/tvdb: prefixes, no secrets in any response", async () => {
+  setCredentials({ pin: true })
+  installFakeNet()
+  const text = await (await get("/manifest.json")).text()
+  const m = JSON.parse(text)
+  assert.deepEqual(m.resources.map((r) => r.name), ["stream"])
+  assert.deepEqual(m.catalogs, [])
+  assert.ok(m.idPrefixes.includes("tmdb:") && m.idPrefixes.includes("tvdb:"))
+  const streams = await (await get("/stream/series/tt42938834:1:1.json")).text()
+  for (const secret of Object.values(FAKE)) {
+    assert.ok(!text.includes(secret) && !streams.includes(secret), "secret leaked")
+  }
+})
+
+test("configured manifests for numbering/mapping get their own id; unknown values are ignored", async () => {
+  const tv = await (await get("/numbering=tvdb-absolute&mapping=absolute/manifest.json")).json()
+  assert.equal(tv.id, "com.eibyx.jkanimenuvio.tvdbabsolute.absolute")
+  const bogus = await (await get("/numbering=http%3A%2F%2Fevil/manifest.json")).json()
+  assert.equal(bogus.id, "com.eibyx.jkanimenuvio")
 })
