@@ -1,4 +1,4 @@
-# Evaluación de la identificación: v0.2.1 frente a esta rama
+# Evaluación de la identificación: v0.2.1 frente a v0.3.0
 
 Generado con `node scripts/evaluate.js --old <copia de main en 0f106cc>` (2026-10-13).
 
@@ -10,7 +10,7 @@ Generado con `node scripts/evaluate.js --old <copia de main en 0f106cc>` (2026-1
 > aparecer en el título), el caso más exigente. Estas cifras miden la lógica de identificación,
 > **no** confirman cómo responde JKAnime hoy ni la reproducción en Nuvio.
 
-- *old*: `main` (v0.2.1). *new*: esta rama.
+- *old*: `main` (v0.2.1). *new*: v0.3.0 (rama `improvement/resolver-reliability`).
 - «MISMA SERIE, ENTRADA O EPISODIO EQUIVOCADO»: se habría servido otra temporada, el original en
   lugar del *remake*, o un episodio que no existe. En v0.2.1, el caso `kitsu:44629:25` se habría
   detenido después en la página del episodio (JKAnime redirige), pero el resolvedor ya lo daba por

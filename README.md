@@ -4,7 +4,7 @@
 
 **Anime en español de JKAnime, directo en Nuvio. En tu propio dispositivo.**
 
-[![Versión](https://img.shields.io/badge/versi%C3%B3n-0.2.1-blue)](#actualizar)
+[![Versión](https://img.shields.io/badge/versi%C3%B3n-0.3.0-blue)](#actualizar)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org/en/download)
 [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-green)](LICENSE)
 [![Pruebas](https://github.com/Eibyx/JkAnimeNuvio/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Eibyx/JkAnimeNuvio/actions/workflows/ci.yml)

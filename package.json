@@ -1,6 +1,6 @@
 {
   "name": "jkanimenuvio",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Addon autoalojado, solo de streams, que ofrece enlaces MP4/HLS de JKAnime para Nuvio y clientes compatibles con addons de Stremio. No afiliado a JKAnime.",
   "private": true,
   "license": "MIT",
