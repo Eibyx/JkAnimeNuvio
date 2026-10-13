@@ -51,9 +51,9 @@ Generado con `node scripts/evaluate.js --old <copia de main en 0f106cc>` (2026-1
 | Falsos positivos | 3 | 0 |
 | …de ellos, misma serie con entrada/episodio equivocado | 3 | 0 |
 | Búsquedas en JKAnime | 70 | 81 |
-| Peticiones a JKAnime | 84 | 102 |
-| Peticiones totales | 206 | 224 |
-| Tiempo total (ms, red simulada) | 109.6 | 129.5 |
+| Peticiones a JKAnime | 84 | 101 |
+| Peticiones totales | 206 | 223 |
+| Tiempo total (ms, red simulada) | 113.4 | 129.9 |
 
 ## Lectura
 

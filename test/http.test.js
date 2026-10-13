@@ -202,3 +202,22 @@ test("real fetch: an internal URL is refused before any connection", async () =>
   }
   assert.equal(hits, 0)
 })
+
+test("a 429 after a redirect retries the ORIGINAL method and body", async () => {
+  let hits429 = 0
+  const seen = fakeNet({
+    "https://a.example/post": (opts) => (opts.method === "POST" ? reply("", { status: 303, headers: { location: "/result" } }) : reply("wrong method", { status: 405 })),
+    "https://a.example/result": () => (hits429++ ? reply("done") : reply("", { status: 429, headers: { "retry-after": "0" } })),
+  })
+  const r = await http.request("https://a.example/post", { method: "POST", body: "x=1" })
+  assert.equal(r.text, "done")
+  assert.deepEqual(seen.map((s) => `${s.method} ${s.href}`), ["POST https://a.example/post", "GET https://a.example/result", "POST https://a.example/post", "GET https://a.example/result"])
+})
+
+test("queued calls keep their own request context (trace, signal)", async () => {
+  const { limiter } = require("../lib/utils/limiter")
+  const { current } = require("../lib/utils/context")
+  const one = limiter(1)
+  const job = (name) => withContext({ name }, () => one(async () => { await new Promise((r) => setTimeout(r, 5)); return current().name }))
+  assert.deepEqual(await Promise.all(["A", "B", "C"].map(job)), ["A", "B", "C"])
+})

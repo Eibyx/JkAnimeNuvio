@@ -50,3 +50,15 @@ test("a year in parentheses is a remake marker, not part of the name", () => {
   assert.equal(scoreTitle("Fruits Basket (2019)", { title: "Fruits Basket" }), 1)
   assert.equal(parseTitle("Blade Runner 2049").year, null)
 })
+
+test("folding never hides markers: '2nd Cour' and 'Gekijouban' still block season 1", () => {
+  for (const [c, t] of [
+    ["Kage no Jitsuryokusha ni Naritakute 2nd Cour", "Kage no Jitsuryokusha ni Naritakute"],
+    ["Kidou Senshi Gundam: Suisei no Majo 2nd Cour", "Kidou Senshi Gundam: Suisei no Majo"],
+    ["Mobile Suit Gundam: The Witch from Mercury 2nd Cour", "Mobile Suit Gundam: The Witch from Mercury"],
+  ]) {
+    assert.equal(scoreTitle(c, { title: t }), 0, c)
+    assert.equal(scoreTitle(c, { title: t, season: 1, canonical: true }), 0, c)
+  }
+  assert.equal(scoreTitle("Koori no Jouheki Gekijouban", { title: "Koori no Jyouheki" }), 0)
+})

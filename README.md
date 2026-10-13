@@ -957,7 +957,7 @@ JKAnimeNuvio incluye dos tipos de comprobaciones. **No son lo mismo**:
 npm test
 ```
 
-Ejecuta 141 pruebas en unos segundos, sin conexión. Entre otros casos, cubren:
+Ejecuta 145 pruebas en unos segundos, sin conexión. Entre otros casos, cubren:
 - Una matriz de identificación: Ao Ashi T1 y T2, Rich Girl Caretaker, Koori no Jouheki T1 y T2,
   Black Clover, Gensou Suikoden, remakes, títulos muy parecidos, OVAs, películas y episodios
   inexistentes.

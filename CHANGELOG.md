@@ -74,7 +74,7 @@ comparación con v0.2.1 en [`docs/EVALUACION.md`](docs/EVALUACION.md).
 
 ### 🧪 Pruebas
 
-141 pruebas (87 en v0.2.1). Nuevas: seguridad HTTP, HTML real de JKAnime archivado, matriz de
+145 pruebas (87 en v0.2.1). Nuevas: seguridad HTTP, HTML real de JKAnime archivado, matriz de
 casos con datos reales (Ao Ashi T1/T2, Rich Girl Caretaker, Koori no Jouheki T1/T2, Black Clover,
 Gensou Suikoden, remakes, OVAs, películas, títulos parecidos), diagnóstico y banco de evaluación.
 Las respuestas de JKAnime de los casos sin copia archivada son simuladas y están indicadas.

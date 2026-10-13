@@ -203,3 +203,10 @@ test("a Cloudflare challenge stops the search at the first query", async () => {
   await assert.rejects(resolve("series", "kitsu:50761:1"), { name: "BlockedError" })
   assert.equal(calls.filter((u) => u.includes("jkanime.net")).length, 1)
 })
+
+test("a different arc under the same main name is never a partial match", async () => {
+  const anime = { "kimetsu-no-yaiba-mugen-ressha-hen": { title: "Kimetsu no Yaiba: Mugen Ressha-hen", type: "Serie", emitted: "Oct 10 de 2021", episodes: 7, status: "Concluido" } }
+  installFakeNet({ anime })
+  common.cache.set("kitsu:907", Promise.resolve({ source: "kitsu", id: "907", format: "TV", episodes: 11, startYear: 2021, titles: ["Kimetsu no Yaiba: Yuukaku-hen"] }))
+  await assert.rejects(resolve("series", "kitsu:907:1"), { code: "ANIME_NOT_FOUND" })
+})

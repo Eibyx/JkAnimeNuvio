@@ -338,7 +338,7 @@ que envía hoy.
 | C1 | Corregido | `lib/utils/expiry.js`, `lib/app.js` |
 | E1 | Corregido | `lib/utils/errors.js`, `lib/stremio/streams.js` |
 | E2 | Corregido según la referencia; formato real **sin verificar** | `decryptFilemoon` |
-| T1 | 87 → 141 pruebas | `test/` |
+| T1 | 87 → 145 pruebas | `test/` |
 | N1 | Node 22/24 en CI; `engines >=22` | `.github/workflows/ci.yml`, `package.json` |
 
 Comparación de la identificación antes y después: [`EVALUACION.md`](EVALUACION.md).
