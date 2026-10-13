@@ -244,3 +244,17 @@ test("identity results are cached", async () => {
   assert.equal(stats.requests.length, n)
   assert.ok(TVDB.series[482279])
 })
+
+test("regression: Gensou Suikoden tt42938834:1:1 = Suikoden: The Anime / Gensou Suikoden / AniList 187316 / gensou-suikoden E1", async () => {
+  setCredentials()
+  installFakeNet()
+  const id = await identify({ imdb: "tt42938834" }, "series")
+  const titles = [...id.names, ...id.aliases]
+  assert.ok(titles.includes("Suikoden: The Anime"))
+  assert.ok(titles.includes("Gensou Suikoden"))
+  assert.deepEqual(id.anilist.map((m) => m.id), [187316])
+  const viaImdb = await resolve("series", "tt42938834:1:1")
+  const viaAnilist = await resolve("series", "anilist:187316:1")
+  assert.deepEqual([viaImdb.slug, viaImdb.episode], ["gensou-suikoden", 1])
+  assert.deepEqual([viaAnilist.slug, viaAnilist.episode], ["gensou-suikoden", 1])
+})
