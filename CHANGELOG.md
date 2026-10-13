@@ -1,5 +1,20 @@
 # Historial de versiones
 
+## Sin publicar
+
+### Corregido
+- **Títulos escritos de forma distinta en cada base de datos** (por ejemplo, `kitsu:49883:1`,
+  *Aoashi 2nd Season*, que JKAnime publica como *Ao Ashi Season 2*):
+  - Las peticiones `kitsu:`, `mal:` y `anilist:` reúnen también los títulos de la **misma entrada**
+    en AniList y ani.zip. Se enlazan mediante los *mappings* de Kitsu y las bases de relaciones,
+    y solo si coinciden el formato y el año.
+  - JKAnime se busca también por el **título base** sin marcador de temporada (`ao ashi`).
+  - Los títulos que solo difieren en los espacios (`Aoashi` / `Ao Ashi`) se consideran iguales.
+  - La temporada y el año se siguen verificando: nunca se sirve la temporada 1 cuando se pide la 2.
+- Registros más claros: se indica qué se buscó en JKAnime y cuántos resultados hubo, y los fallos
+  de servidores tras identificar el episodio (por ejemplo, HTTP 404 de Streamtape o del
+  reproductor de JKAnime: vídeo eliminado) se distinguen de un fallo de identificación.
+
 ## 🎌 JKAnimeNuvio v0.2.0 — Primera versión estable
 
 Primera versión estable de **JKAnimeNuvio**, un addon **solo de streams** que ofrece enlaces de

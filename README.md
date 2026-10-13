@@ -682,8 +682,14 @@ borra.
 > **Lo primero: mira la pantalla donde ejecutaste `npm start`.** Cada petición de Nuvio deja una
 > línea:
 >
-> - `[stream] series tt7441658:1:5 -> black-clover-tv ep 5 (season/cinemeta)`: encontrado.
-> - `[stream] series …: no streams (motivo)`: el motivo explica qué falló.
+> - `[stream] series tt7441658:1:5 -> black-clover-tv ep 5 (season/cinemeta)`: **episodio
+>   identificado**.
+> - `[streams] black-clover-tv ep 5: 4 links from 6 servers (sin enlace: …)`: cuántos servidores
+>   dieron un enlace reproducible. Los que fallan aquí **no** son un fallo de identificación.
+> - `[stream] series …: no streams (motivo)`: no se pudo identificar o no hubo enlaces; el motivo
+>   explica qué falló.
+> - `[resolver] queries=["ao ashi", …] -> 0 JKAnime results`: qué se buscó en JKAnime y cuántos
+>   resultados hubo.
 
 Comandos de diagnóstico útiles (cámbialos por la IP o el episodio que corresponda):
 
@@ -782,14 +788,22 @@ en la nube**.
 <details>
 <summary><b>🎞️ Un servidor de vídeo dejó de funcionar (por ejemplo, Filemoon)</b></summary>
 
-Los servidores de vídeo cambian sus páginas con frecuencia. Cuando un extractor deja de
-funcionar, verás:
+Los servidores de vídeo cambian sus páginas con frecuencia. Cuando un servidor no da enlace,
+verás una línea con el motivo, por ejemplo:
 
 ```text
-[streams] Filemoon failed: …
+[streams] ao-ashi-season-2 ep 1 · Streamtape: video eliminado o no disponible en ese servidor (HTTP 404) (…)
+[streams] ao-ashi-season-2 ep 1 · Filemoon: no se encontró un enlace directo (…)
 ```
 
 y ese servidor simplemente no aparece en la lista. Los demás siguen apareciendo.
+
+| Motivo | Qué significa |
+|---|---|
+| `video eliminado o no disponible en ese servidor (HTTP 404)` | El servidor ya no tiene ese vídeo (también pasa con el reproductor propio de JKAnime). **El anime sí se identificó**; no hay nada que corregir en la identificación. |
+| `no se encontró un enlace directo` | La página del servidor cambió y el extractor no reconoce el vídeo. |
+| `sin respuesta a tiempo` | El servidor tardó demasiado. Suele ser temporal. |
+| `bloqueado por Cloudflare` | Ver [Cloudflare](#problemas). |
 
 - **Filemoon** obtiene el vídeo desde la propia API de su reproductor. Si Filemoon cambia ese
   sistema, dejará de funcionar hasta que se actualice el extractor.
