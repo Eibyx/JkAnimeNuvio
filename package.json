@@ -1,9 +1,33 @@
 {
   "name": "jkanimenuvio",
   "version": "0.2.0",
-  "description": "Stream-only Stremio-protocol addon that serves direct MP4/HLS links from JKAnime, built for Nuvio. Not affiliated with JKAnime.",
-  "main": "index.js",
+  "description": "Addon autoalojado, solo de streams, que ofrece enlaces MP4/HLS de JKAnime para Nuvio y clientes compatibles con addons de Stremio. No afiliado a JKAnime.",
   "private": true,
+  "license": "MIT",
+  "author": "Eibyx (https://github.com/Eibyx)",
+  "contributors": [
+    {
+      "name": "Lucas Gómez (KB) / Pigamer37",
+      "url": "https://github.com/Pigamer37/animeflv-stremio-addon"
+    }
+  ],
+  "homepage": "https://github.com/Eibyx/JkAnimeNuvio#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Eibyx/JkAnimeNuvio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Eibyx/JkAnimeNuvio/issues"
+  },
+  "keywords": [
+    "jkanime",
+    "nuvio",
+    "stremio",
+    "stremio-addon",
+    "anime",
+    "self-hosted"
+  ],
+  "main": "index.js",
   "engines": {
     "node": ">=20"
   },
@@ -12,18 +36,6 @@
     "test": "node --test",
     "live-check": "node scripts/live-check.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Eibyx/JkAnimeNuvio.git"
-  },
-  "keywords": [
-    "stremio",
-    "nuvio",
-    "jkanime",
-    "anime"
-  ],
-  "author": "Eibyx (based on animeflv-stremio-addon by Pigamer37)",
-  "license": "MIT",
   "dependencies": {
     "cheerio": "^1.1.2",
     "dotenv": "^16.5.0",

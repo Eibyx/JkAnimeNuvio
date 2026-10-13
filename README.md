@@ -488,6 +488,7 @@ Después de cambiar `.env`, **reinicia** JKAnimeNuvio (Ctrl + C y `npm start`).
 | `RELATIONS_ENABLED` | `true` | `false` desactiva las bases de relaciones yuna y ani.zip. |
 | `HOST` | `0.0.0.0` | Interfaz de red. Con `127.0.0.1`, solo este mismo dispositivo puede conectarse. |
 | `JKANIME_BASE` | `https://jkanime.net` | Dirección de JKAnime. |
+| `CINEMETA_BASE` | `https://v3-cinemeta.strem.io` | Dirección de Cinemeta (solo para identificar). |
 | `HTTP_TIMEOUT_MS`, `TMDB_TIMEOUT_MS`, `TVDB_TIMEOUT_MS`, `CINEMETA_TIMEOUT_MS`, `ANILIST_TIMEOUT_MS`, `KITSU_TIMEOUT_MS`, `RELATIONS_TIMEOUT_MS` | 6000 a 10000 | Tiempo máximo de espera por fuente, en milisegundos. |
 | `EXTRACT_TIMEOUT_MS` | `12000` | Tiempo máximo por servidor de vídeo. |
 | `STREAM_TIMEOUT_MS` | `25000` | Tiempo máximo total por petición de Nuvio. |
