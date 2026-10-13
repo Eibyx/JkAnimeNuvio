@@ -1,6 +1,6 @@
 const { test, beforeEach, afterEach } = require("node:test")
 const assert = require("node:assert/strict")
-const { installFakeNet, resetAll, packed, response, b64, JK } = require("./helpers")
+const { installFakeNet, resetAll, packed, response, b64, JK } = require("../test-support/helpers")
 const http = require("../lib/http")
 const ex = require("../lib/extractors")
 const jkanime = require("../lib/jkanime")

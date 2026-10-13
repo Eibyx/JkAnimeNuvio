@@ -84,8 +84,8 @@ function response(body, { status = 200, url, headers = {} } = {}) {
  *   blocked: serve the Cloudflare challenge for every jkanime.net request
  */
 function installFakeNet({ anime = DEFAULT_ANIME, servers = defaultServers, blocked = false, cinemeta, anilist, calls = [] } = {}) {
-  const cinemetaFixtures = { "series/tt7441658": require("./fixtures/cinemeta-black-clover.json"), ...(cinemeta || {}) }
-  const anilistFixture = anilist || require("./fixtures/anilist-black-clover.json")
+  const cinemetaFixtures = { "series/tt7441658": require("../test/fixtures/cinemeta-black-clover.json"), ...(cinemeta || {}) }
+  const anilistFixture = anilist || require("../test/fixtures/anilist-black-clover.json")
   http.setFetch(async (href, opts = {}) => {
     const url = new URL(href)
     calls.push(url.href)

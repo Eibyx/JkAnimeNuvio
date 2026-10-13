@@ -1,6 +1,6 @@
 const { test, beforeEach, afterEach } = require("node:test")
 const assert = require("node:assert/strict")
-const { installFakeNet, resetAll, DEFAULT_ANIME } = require("./helpers")
+const { installFakeNet, resetAll, DEFAULT_ANIME } = require("../test-support/helpers")
 const { resolve } = require("../lib/resolver")
 const metadata = require("../lib/metadata")
 

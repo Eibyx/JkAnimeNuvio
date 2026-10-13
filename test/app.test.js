@@ -1,6 +1,6 @@
 const { test, before, after, beforeEach } = require("node:test")
 const assert = require("node:assert/strict")
-const { installFakeNet, resetAll } = require("./helpers")
+const { installFakeNet, resetAll } = require("../test-support/helpers")
 const { createApp } = require("../lib/app")
 
 let server
