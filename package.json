@@ -1,6 +1,6 @@
 {
   "name": "jkanimenuvio",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Stream-only Stremio-protocol addon that serves direct MP4/HLS links from JKAnime, built for Nuvio. Not affiliated with JKAnime.",
   "main": "index.js",
   "private": true,
