@@ -1,14 +1,6 @@
-on: 
-  push:
-    paths-ignore:
-    - 'README.md'
-    - 'LICENSE'
-    - 'vercel.json'
-    - '.gitattributes'
-    - '.gitignore'
-    - '.github/**'
-    branches:
-    - main
+# Manual only: JKAnimeNuvio must not be deployed automatically on push/merge.
+# Run it from the Actions tab once a deployment has been explicitly approved.
+on:
   workflow_dispatch:
 jobs:
   build:
@@ -25,6 +17,8 @@ jobs:
         cache: 'npm'
     - name: npm install (npm ci)
       run: npm ci
+    - name: Tests
+      run: npm test
     - name: Upload artifact for deployment job
       uses: actions/upload-artifact@v7.0.1
       with:

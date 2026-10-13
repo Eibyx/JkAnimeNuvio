@@ -1,147 +1,110 @@
-# [AnimES Stremio addon](https://pigamer37.alwaysdata.net/manifest.json)
-<p align="center"><img src="https://raw.githubusercontent.com/Pigamer37/animeflv-stremio-addon/refs/heads/main/views/AnimES.png" alt="AnimES logo" width="256"/></p>
-<!-- <p align="center"><img src="https://www3.animeflv.net/assets/animeflv/img/logo.png?v=2.3" alt="AnimeFLV logo" width="256"/></p> -->
-<p align="center"><img src="https://animeav1.com/img/logo-dark.svg" alt="AnimeAV1 logo" width="256"/></p>
-<p align="center"><img src="https://i.imgur.com/cE0mosE.png" alt="Henaojara logo" width="256"/></p>
-<p align="center"><img src="https://tioanime.com/assets/img/logo-dark.png" alt="Henaojara logo" width="256"/></p>
-<!-- <p align="center"><img src="https://animejara.com/wp-content/uploads/2025/11/ANIMEJARA_INICIO3.png" alt="AnimeJara logo" width="300"/></p> -->
-<p align="center"><img src="https://cdn.jkdesa.com/assets3/css/img/jkanimenet-dark.png?v=2.0.184" alt="JKAnime logo" width="256"/></p>
+# JKAnimeNuvio
 
-Node.js and express.js based addon to add AnimeAV1, Henaojara, TioAnime & JKAnime functionallity to Stremio, not affiliated with AnimeAV1 Henaojara, TioAnime or JKAnime. (I'm new to backend so I'm using it as a learning experience).
+Addon **solo de streams** que usa el protocolo de addons de Stremio para servir enlaces
+directos (MP4 o HLS) de episodios de [JKAnime](https://jkanime.net). Está pensado para
+[Nuvio](https://github.com/tapframe/NuvioStreaming), pero cualquier cliente compatible con
+Stremio puede usarlo.
 
-## Normal use
-### Install by visiting <https://pigamer37.alwaysdata.net/configure>, or by copying <stremio://pigamer37.alwaysdata.net/manifest.json> on your browser or paste <https://pigamer37.alwaysdata.net/manifest.json> on the Stremio addons search bar :mag: or the Add addon button
+No está afiliado a JKAnime. Deriva de
+[animeflv-stremio-addon](https://github.com/Pigamer37/animeflv-stremio-addon) (MIT).
 
-### Features:
-- :tv: Catalog of currently airing anime, to keep up with what is currently being released
-- :mag: Search the AnimeAV1, Henaojara, TioAnime & JKAnime databases/catalogs through Stremio's searchbar, or filter them by genre in the Discovery tab
-- :wrench: Compatible with other addons, like Cinemeta, TMDB or kitsu so you can use your preferred metadata provider (see [supported ID's](#endpoints) for technical details)
-- :page_with_curl: See metadata extracted from AnimeAV1, Henaojara, TioAnime & JKAnime natively in Stremio, like synopses/overviews, genres, related media, episode lists and release dates for upcoming episodes
-  - :calendar: If you add series to your library (through an AnimeFLV or TioAnime ID), upcoming episodes will show up in your Stremio calendar!
-- :satellite: Provides stream sources from AnimeAV1, Henaojara, TioAnime & JKAnime
+## Qué hace (y qué no)
 
-This addon provides metadata and streaming options from AnimeAV1, Henaojara, TioAnime & JKAnime. It offers a catalog with airing anime on the homepage, and a searchable catalog of all AnimeAV1, Henaojara, TioAnime & JKAnime, even being able to filter by genre. Additionally, when you open an item on Stremio that matches some parameters set in the manifest (generated on [`index.js`](index.js)), or whenever you start watching something, the platform will call this addon. When the program can get the data for the item you are about to watch, some metadata will be provided and/or streaming options will appear as "AnimeFLV ...", "AnimeAV1 ...", "Henaojara ...", "TioAnime ...", "AnimeJara ..." or "JKAnime ..." (the ones marked as external open a player on your browser, working on getting more sources to be watchable directly on Stremio. You can add them by [configuring the addon](https://pigamer37.alwaysdata.net/configure), as they are not added by default).
+- Expone únicamente el recurso `stream`. No hay `catalog` ni `meta`: los metadatos los
+  aporta el addon que ya uses (Cinemeta, TMDB, Kitsu…).
+- Usa JKAnime como única fuente de vídeo. Cinemeta, AniList, Kitsu y (opcionalmente)
+  TMDB se consultan solo para **identificar** el anime y el episodio que pide el cliente.
+- Devuelve solo URLs `http(s)` directas a `.mp4` o `.m3u8` (más Pixeldrain y Streamtape,
+  que sirven el archivo sin extensión). Nunca devuelve `externalUrl` ni páginas embed.
 
-> [!TIP]
-> ### Recommendations
-> 1. Right now, the metadata provided by Cinemeta (the default meta and catalog addon), the TMDB meta addon or the Anime kitsu addon is much richer and works well with other addons, as they just use IMDB ID's, TMDB ID's or kitsu ID's respectively to provide and identify content. This addon should work with items provided by these catalogs, so you can get AnimeFLV's, AnimeAV1's, Henaojara's, TioAnime's and JKAnime's streams/sources while getting **their** metadata.
-> 2. Learning japanese? I have a [Japanese subtitle addon](https://github.com/Pigamer37/buta-no-subs-stremio-addon), and there's also the [Strelingo Addon](https://github.com/Serkali-sudo), which lets you **see two subtitle languages at the same time** (English and Japanese, for example), and uses the former as a provider for Japanese subs.
+## Instalación
 
-## Tips are welcome!
-If you like the addon and would like to thank me monetarily, you can do so through ko-fi. Thank you! :money_with_wings:\
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M219PJVI)
-
-## Endpoints
-Here's the path to call it (parameters are marked by being enclosed in {} and described below):
+```bash
+npm ci
+npm test
+PORT=3000 npm start
 ```
-/{resource}/{type}/{ID}.json
-```
-Parameters
-1. `resource`: stream and meta are very self explanatory, and catalog exposes a list of anime. 
-   - When using catalog as a resource, you can also call `/catalog/{type}/{ID}/search={query}.json` where `query` is what to search for on AnimeAV1, Henaojara, TioAnime & JKAnime, or `/catalog/{type}/{ID}/genre={query}.json` where `query` is the genre ([there's a list of genres in the manifest](index.js#L35), and `query` must match one exactly) to search or filter the whole AnimeFLV/AnimeAV1/Henaojara/TioAnime database. It's defined this way to work with Stremio. Use `animeflv`/`animeav1`... or `animeflv|genres`/`animeav1|genres`/`henaojara|genres`... as the `ID`, or use `animeflv|onair`/`animeav1|onair`/`henaojara|onair`... (without search or genre queries) to get a list of currently airing anime.
-2. `type`: should not matter, but to make sure, use 'movie' or 'series' depending on what the item is
-3. `ID`: Except for IMDB & JKAnime, different seasons have different ID's. Here we have some options:
-   - `AnimeAV1 ID`: starts with "animeav1:", followed by the series AnimeAV1 slug, always. This is the "native" ID type and the one the catalogs the addon offers use. You can specify an episode number if you want. Example: `animeav1:kono-subarashii-sekai-ni-shukufuku-wo:2` *should* give results for Konosuba (Season 1 was specified with the AnimeAV1 slug) Episode 2
-   - `Henaojara ID`: starts with "henaojara:", followed by the series Henaojara slug, always. This is the "native" ID type and the one the catalogs the addon offers use. You can specify an episode number if you want. Example: `henaojara:kono-subarashii-sekai-ni-shukufuku-wo:2` *should* give results for Konosuba (Season 1 was specified with the Henaojara slug) Episode 2
-   - `TioAnime ID`: starts with "tioanime:", followed by the series TioAnime slug, always. This is the "native" ID type and the one the catalogs the addon offers use. You can specify an episode number if you want. Example: `tioanime:kono-subarashii-sekai-ni-shukufuku-wo:2` *should* give results for Konosuba (Season 1 was specified with the TioAnime slug) Episode 2
-   - `JKAnime ID`: starts with "jkanime:", followed by the series JKAnime slug, always. This is the "native" ID type and the one the catalogs the addon offers use. You can specify an episode number if you want. Example: `jkanime:kono-subarashii-sekai-ni-shukufuku-wo:2` *should* give results for Konosuba (Season 1 was specified with the JKAnime slug) Episode 2
-   
-   > [!NOTE]
-   > These native ID's usually are the same (like in the example), but sometimes they may differ between them (specially on AnimeJara).
 
-   - `IMDB ID`: starts with "tt", followed by a number, always. If you are looking for a series, you can specify the season and episode numbers. Example: `tt5370118:1:2` *should* give results for Konosuba Season 1 Episode 2
-   - `TMDB ID`: starts with "tmdb:", followed by a number, always. You can specify a season and episode number if you want. Example: `tmdb:65844:1:2` *should* give results for Konosuba Season 1 Episode 2
-   - `kitsu ID`: starts with "kitsu:", followed by a number, always. You can specify an episode number if you want. Example: `kitsu:10941:2` *should* give results for Konosuba (Season 1 was specified with the kitsu ID) Episode 2
-   - `AniList ID`: starts with "anilist:", followed by a number, always. You can specify an episode number if you want. Example: `anilist:21202:2` *should* give results for Konosuba (Season 1 was specified with the AniList ID) Episode 2
-   - `MyAnimeList ID`: starts with "mal:", followed by a number, always. You can specify an episode number if you want. Example: `mal:30831:2` *should* give results for Konosuba (Season 1 was specified with the AniList ID) Episode 2
-   - `aniDB ID`: starts with "anidb:", followed by a number, always. You can specify an episode number if you want. Example: `anidb:11261:2` *should* give results for Konosuba (Season 1 was specified with the AniList ID) Episode 2
+Instala en Nuvio o Stremio con `https://<tu-servidor>/manifest.json`.
 
-You can add some configuration before the call. Right now, the only available config is:
-  - `externalStreams`: adds external streams (they open on a browser) to the bottom of the results (values other than true are considered false `/externalStreams=true/stream/...`)
+Nuvio, en Android o iOS, necesita una URL accesible desde el dispositivo (HTTPS público o
+una IP de tu red local). El servidor debe poder acceder a jkanime.net: JKAnime responde con
+un desafío de Cloudflare a muchas IPs de centros de datos, y en ese caso el addon devuelve
+`{"streams": []}`.
 
-## Run locally
-> [!IMPORTANT]
-> 0. Previous steps/requirements:
->  - This project runs on Node.js, so install both Node.js and the npm (Node Package Manager)
->  - You'll need to get all necessary API keys. Right now you only need to get keys for the TMDB API [^API], which is free. This addon uses the AniList API and <https://relations.yuna.moe/api/v2> too, but those don't need a key/authentication for publicly accessible data
-> [^API]: Because of how it works, you can *probably* (I have not tested this) get away with not setting these keys, and you'll just won't be able to process IMDB ID (starting with "tt") or TMDB ID ("tmdb:") based items.
->  - Enter your parameters inside a .env file like this: [^dotenv]
-> [^dotenv]: You just need to make a file inside the top level repository folder, enter the required information and rename it ".env". You don't need to install the **dotenv** npm package manually, the next steps will take care of project dependencies.
->    ```
->    TMDB_API_READ_TOKEN = yourTMDBAPIReadToken
->    TMDB_API_KEY = yourTMDBAPIkey
->    ```
-1. Clone the repo/dowload the code on your machine however you like, and navigate to the project's directory (where `package.json` resides)
-2. Run the following command to install all necessary dependencies based on `package.json`:
-   ```
-   npm install
-   ```
-3. Run a local instance of the server
-> [!TIP]
-> You can run a convenient instance of the project that will restart itself when you make changes to the files (after saving) using `nodemon`, with the preprogrammed devStartWeb command (`nodemon index.js` under the hood) with:
-> ```
-> npm run devStartWeb
-> ```
-5. Make requests to the app on localhost:3000 (or the port set in an environment variable if it exists) or by using Stremio, in which case you'll need to install the addon (just provide Stremio the manifest url: "https://localhost:3000/manifest.json", for example)
-> [!TIP]
-> When running locally, your IP and the server's IP are the same, so you can uncomment [the code on `streamParsing.js`](lib/streamParsing.js#L30) that extracts StreamTape, Streamwish, Okru & Mixdrop links and they should work inside of Stremio (see [TO DO](#to-do)).
+## IDs admitidos
 
-## Acknowledgements:
-> [!NOTE]
-<!-- > <p align="center"><img src="https://www3.animeflv.net/assets/animeflv/img/logo.png?v=2.3" alt="AnimeFLV logo" width="256"/></p>
-> This application/addon uses AnimeFLV but is not endorsed, certified, or otherwise approved by AnimeFLV.
-> -->
-> <p align="center"><img src="https://animeav1.com/img/logo-dark.svg" alt="AnimeAV1 logo" width="256"/></p>
-> This application/addon uses AnimeAV1 but is not endorsed, certified, or otherwise approved by AnimeAV1.
->
-> <p align="center"><img src="https://i.imgur.com/cE0mosE.png" alt="Henaojara logo" width="256"/></p>
-> This application/addon uses Henaojara but is not endorsed, certified, or otherwise approved by Henaojara.
->
-> <p align="center"><img src="https://tioanime.com/assets/img/logo-dark.png" alt="Henaojara logo" width="256"/></p>
-> This application/addon uses TioAnime but is not endorsed, certified, or otherwise approved by TioAnime.
->
-<!-- > <p align="center"><img src="https://animejara.com/wp-content/uploads/2025/11/ANIMEJARA_INICIO3.png" alt="AnimeJara logo" width="300"/></p>
-> This application/addon uses AnimeJara but is not endorsed, certified, or otherwise approved by AnimeJara.
-> -->
-> <p align="center"><img src="https://cdn.jkdesa.com/assets3/css/img/jkanimenet-dark.png?v=2.0.184" alt="JKAnime logo" width="256"/></p>
-> This application/addon uses JKAnime but is not endorsed, certified, or otherwise approved by JKAnime.
->
-<!-- > [The unofficial AnimeFLV API](https://animeflv.ahmedrangel.com/api)
-> This application/addon uses the unofficial AnimeFLV API (or its adapted code) but is not endorsed, certified, or otherwise approved by it.
-> -->
-> ![The Movie DataBase logo](https://www.themoviedb.org/assets/2/v4/logos/v2/blue_long_2-9665a76b1ae401a510ec1e0ca40ddcb3b0cfe45f1d51b77a308fea0845885648.svg)
-> This application/addon uses TMDB and the TMDB API but is not endorsed, certified, or otherwise approved by TMDB.
->
-> In case TMDB doesn't work, the [Cinemeta Stremio Addon](https://v3-cinemeta.strem.io/) will be used to get the item's metadata.
+| ID | Ejemplo | Numeración |
+|---|---|---|
+| IMDb (Cinemeta) | `tt7441658:2:1` | Temporadas de Cinemeta |
+| IMDb con TMDB | `/numbering=tmdb/manifest.json` + `tt7441658:2:1` | Temporadas de TMDB (requiere `TMDB_API_READ_TOKEN`) |
+| TMDB | `tmdb:73223:2:1` | Temporadas de TMDB (requiere `TMDB_API_READ_TOKEN`) |
+| Kitsu | `kitsu:13209:5` | Episodio de esa entrada de Kitsu |
+| MyAnimeList / AniList | `mal:34572:5`, `anilist:97940:5` | Episodio de esa entrada |
+| Película IMDb | `tt…` (tipo `movie`) | — |
 
-## TO DO:
-- [X] Publish to Stremio Addon Catalog (not on Beam Up, because the beamup tool is not working for me)
-- [X] Implement Stremio's `skip` extra argument functionality for pagination (each query outputs 24 results)
-- [ ] Research how to get the files directly to Stremio instead of having to send an external link (Streamtape, Streamwish, Okru & Mixdrop streams are IP bound 😞)
-  - [X] Got YourUpload streams working inside of Stremio
-  - [X] Got MP4Upload streams working inside of Stremio
+## Cómo se identifica el episodio
 
-### Enhancements/new features
-- [X] Support MyAnimeList, AniDB, AniList and kitsu ID's and thus the kitsu and MALSync Stremio addons via <https://relations.yuna.moe/api/v2>
-- [X] Offer "On Air" catalog and searchable catalog
-- [X] Make catalog searchable by genre. Up to 4 can be queried at once
-  - [ ] Stremio doesn't reflect a multiple genre search on the UI so only one genre can be queried through the app so it doesn't appear buggy
-- [X] Support Metadata requests
-   - [X] Get upcoming episodes with correct dates
-     - [X] Get Stremio to show `UPCOMING` tags on upcoming episodes and show them on the calendar (undocumented, but reverse engineered)
-   - [X] Get and display the item's related entries (prequels/sequels, spinoffs, alternative retellings...)
-   - [X] Get episode thumbnails
-   - [X] Get series background images
-   - [ ] Get series logos
-   - [ ] Get episode overviews
-- [X] Touch up the views (the homepage, mainly)
-- [ ] Investigate Stremio API
+1. **Metadatos del ID.** Se obtienen el nombre y la estructura de temporadas: número de
+   episodios y año de inicio de cada temporada.
+2. **Títulos alternativos.** AniList aporta los títulos romaji, inglés y sinónimos (solo
+   los de alfabeto latino) de la entrada que se emitió el mismo año que la temporada
+   pedida. Así se encuentran nombres como "Black Clover 2nd Season" o "Shingeki no Kyojin".
+3. **Búsqueda en JKAnime.** Se busca con esos títulos y cada resultado se puntúa con
+   coeficiente de Dice sobre el nombre normalizado. Los marcadores de temporada, parte,
+   película, OVA o especial deben coincidir. Los números que forman parte del nombre
+   ("Kaiju No. 8", "Mob Psycho 100") no se interpretan como temporada.
+4. **Verificación.** Se abre la ficha del candidato en JKAnime y se comprueba el año de
+   emisión (±1), el tipo y el número de episodios. Si dos candidatos empatan, no se
+   devuelve nada.
+5. **Numeración continua.** Si JKAnime no tiene una entrada propia para la temporada N,
+   se prueba la entrada principal con el número absoluto (suma de las temporadas
+   anteriores + episodio), siempre que la ficha tenga suficientes episodios.
+6. **Página del episodio.** Si JKAnime redirige a la ficha o muestra otro número de
+   episodio, no se devuelve ningún stream.
 
-## Documentation used:
-- [Stremio Addon guide](https://stremio.github.io/stremio-addon-guide/basics)
-- [Stremio Addon docs](https://github.com/Stremio/stremio-addon-sdk/tree/master/docs)
-- [TMDB API](https://developer.themoviedb.org/docs/getting-started)
-- Node.js docs
-- Express.js docs
-- [MDN docs](https://developer.mozilla.org/en-US/docs/Web)
-- [JSDoc docs](https://jsdoc.app/)
+Las temporadas 0 (especiales y OVAs) no se asignan.
+
+### Black Clover (`tt7441658`)
+
+Datos reales de Cinemeta (13‑10‑2026): T1 = 170 episodios (2017‑2021), T2 = 13 episodios
+desde el 03‑10‑2026 y T0 = 19 especiales. TMDB divide los 170 episodios en 4 temporadas
+(51/51/52/16).
+
+| Petición | Resultado |
+|---|---|
+| `tt7441658:1:1` … `:1:170` | `black-clover-tv` ep. 1…170 |
+| `tt7441658:2:1` (Cinemeta) | entrada de la 2.ª temporada (2026), ep. 1. **Nunca** `black-clover-tv/1` ni `/171` |
+| `tt7441658:2:1` sin entrada 2026 en JKAnime | vacío (171 > 170) |
+| `tt7441658:2:1` con `numbering=tmdb` | `black-clover-tv` ep. 52 |
+| `tt7441658:0:N` | vacío |
+
+Los slugs exactos de JKAnime (`black-clover-tv`, etc.) **no se han podido comprobar** en
+directo; en las pruebas se usan HTML sintéticos.
+
+## Servidores
+
+Servidor propio de JKAnime (`jkplayer`), YourUpload, MP4Upload, Streamwish, Vidhide o
+Filelions, VOE, Filemoon, Mixdrop, Streamtape, Pixeldrain y OK.ru. Los demás (Mega,
+Doodstream…) se omiten. Cada stream incluye `behaviorHints.proxyHeaders.request` con
+`Referer` y `User-Agent`, y `notWebReady: true`.
+
+Las URLs de los embeds proceden de HTML de terceros. Por eso solo se aceptan destinos
+`http(s)` públicos: se rechazan localhost, IPs privadas y credenciales en la URL.
+
+## Pruebas
+
+- `npm test`: pruebas **sin red** (`node:test`). Los datos de Cinemeta y AniList son
+  copias recortadas de respuestas reales. El HTML de JKAnime y de los servidores es
+  **sintético**.
+- `npm run live-check [-- tt7441658:2:1 …]`: comprobación **real** contra Cinemeta, AniList
+  y JKAnime. Muestra los errores tal cual, por ejemplo el bloqueo de Cloudflare.
+
+## Variables de entorno
+
+Consulta [`.env.example`](.env.example). Ninguna es obligatoria.
+
+## Despliegue
+
+`.github/workflows/deploy.yml` solo se ejecuta manualmente (`workflow_dispatch`). Al hacer
+push o merge a `main` no se despliega nada.
