@@ -5,7 +5,7 @@
 **Anime en español de JKAnime, directo en Nuvio. En tu propio dispositivo.**
 
 [![Versión](https://img.shields.io/badge/versi%C3%B3n-0.2.1-blue)](#actualizar)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org/en/download)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org/en/download)
 [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-green)](LICENSE)
 [![Pruebas](https://github.com/Eibyx/JkAnimeNuvio/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Eibyx/JkAnimeNuvio/actions/workflows/ci.yml)
 
@@ -81,11 +81,13 @@ Nuvio  ◀──────────(lista de enlaces)───────�
 | 📺 | **Compatible con Nuvio** | Manifiesto del protocolo Stremio con un único recurso: `stream`. |
 | 🔍 | **Identificación por IMDb, TMDB, TVDB, AniList, MAL y Kitsu** | Funciona con los identificadores que usan Nuvio y los addons de metadatos habituales. |
 | 🌸 | **Títulos japoneses, ingleses y alternativos** | Encuentra "Shingeki no Kyojin" aunque Nuvio pida "Attack on Titan", y "Gensou Suikoden" aunque pida "Suikoden: The Anime". |
+| 🧩 | **Títulos larguísimos y variantes de escritura** | Busca por fragmentos distintivos ("Saijo no Osewa" para un título de 20 palabras) y reconoce romanizaciones distintas ("Jyouheki"/"Jouheki"), sin listas fijas por anime. |
+| 🩺 | **Modo diagnóstico** | `npm run diagnose -- ID` explica cada paso: qué se buscó, qué se descartó y por qué. |
 | 📚 | **Temporadas y episodios inteligentes** | Distingue temporadas, películas, OVAs y especiales, y comprueba el año de emisión antes de elegir. |
 | 🔄 | **Numeración continua o independiente** | Adapta "Temporada 2, episodio 1" al episodio correcto de JKAnime (ver [Configuración de temporadas](#temporadas)). |
 | ⚡ | **Caché y consultas en paralelo** | Responde más rápido al repetir episodios y consulta varias fuentes a la vez. |
 | 🛡️ | **Validación y manejo de errores** | Si una fuente falla o hay dudas, devuelve una lista vacía en lugar de un episodio equivocado. |
-| 🔒 | **Credenciales protegidas** | Tus claves de TMDB/TVDB nunca aparecen en respuestas ni en registros. |
+| 🔒 | **Credenciales y red protegidas** | Tus claves de TMDB/TVDB nunca aparecen en respuestas ni en registros, y el addon nunca se conecta a tu red local aunque un servidor de vídeo lo intente. |
 
 ### 🎬 Servidores de reproducción
 
@@ -123,7 +125,7 @@ directo de los siguientes:
 | Requisito | ¿Obligatorio? | Detalles |
 |---|---|---|
 | 📱 Android con **Termux**, o una computadora con Windows, Linux o macOS | Sí | Es donde se ejecutará el servidor. |
-| 🟩 **Node.js 20 o superior** | Sí | El entorno que ejecuta JKAnimeNuvio. |
+| 🟩 **Node.js 22 o superior** (LTS 22 o 24) | Sí | El entorno que ejecuta JKAnimeNuvio. Node.js 20 ya no tiene soporte. |
 | 🌿 **Git** | Sí | Para descargar y actualizar el proyecto. |
 | 🌐 **Conexión a Internet** | Sí | Una conexión doméstica o móvil normal. Las VPN y los servidores en la nube suelen estar bloqueados por JKAnime (Cloudflare). |
 | 📺 **Nuvio** u otro cliente compatible con addons de Stremio | Sí | Donde verás el anime. |
@@ -197,7 +199,7 @@ defecto.
 pkg install -y git nodejs-lts nano curl
 ```
 
-Comprueba las versiones. Node.js debe ser **20 o superior**:
+Comprueba las versiones. Node.js debe ser **22 o superior** (`nodejs-lts` instala una versión LTS actual):
 
 ```bash
 node -v
@@ -340,7 +342,7 @@ proyecto, configurar `.env` e iniciar. Los comandos cambian según el sistema.
    <https://git-scm.com/downloads>.
 
    **Cierra y vuelve a abrir PowerShell** para que reconozca los nuevos programas.
-2. **Comprueba las versiones** (Node.js 20 o superior):
+2. **Comprueba las versiones** (Node.js 22 o superior):
    ```powershell
    node -v
    git --version
@@ -378,7 +380,8 @@ proyecto, configurar `.env` e iniciar. Los comandos cambian según el sistema.
 <details>
 <summary><b>🐧 Linux</b></summary>
 
-1. **Instala Node.js 20+ y Git** con el gestor de tu distribución:
+1. **Instala Node.js 22+ y Git** con el gestor de tu distribución (si tu distribución trae una
+   versión anterior, usa <https://nodejs.org/en/download>):
    ```bash
    # Debian / Ubuntu
    sudo apt update && sudo apt install -y git nodejs npm
@@ -387,7 +390,7 @@ proyecto, configurar `.env` e iniciar. Los comandos cambian según el sistema.
    # Arch
    sudo pacman -S --needed git nodejs npm
    ```
-   Comprueba la versión con `node -v`. Si es **menor que 20** (frecuente en Debian/Ubuntu),
+   Comprueba la versión con `node -v`. Si es **menor que 22** (frecuente en Debian/Ubuntu),
    instala una versión actual con [nvm](https://github.com/nvm-sh/nvm) o desde
    <https://nodejs.org/en/download>.
 2. **Descarga el proyecto, configúralo e inícialo:**
@@ -407,7 +410,7 @@ proyecto, configurar `.env` e iniciar. Los comandos cambian según el sistema.
 <details>
 <summary><b>🍎 macOS</b></summary>
 
-1. **Instala Node.js 20+ y Git.** Con [Homebrew](https://brew.sh/):
+1. **Instala Node.js 22+ y Git.** Con [Homebrew](https://brew.sh/):
    ```bash
    brew install node git
    ```
@@ -491,6 +494,12 @@ Después de cambiar `.env`, **reinicia** JKAnimeNuvio (Ctrl + C y `npm start`).
 | `HTTP_TIMEOUT_MS`, `TMDB_TIMEOUT_MS`, `TVDB_TIMEOUT_MS`, `CINEMETA_TIMEOUT_MS`, `ANILIST_TIMEOUT_MS`, `KITSU_TIMEOUT_MS`, `RELATIONS_TIMEOUT_MS` | 6000 a 10000 | Tiempo máximo de espera por fuente, en milisegundos. |
 | `EXTRACT_TIMEOUT_MS` | `12000` | Tiempo máximo por servidor de vídeo. |
 | `STREAM_TIMEOUT_MS` | `25000` | Tiempo máximo total por petición de Nuvio. |
+| `JK_MAX_QUERIES` | `8` | Búsquedas máximas en JKAnime por petición. |
+| `JK_SEARCH_CONCURRENCY` | `2` | Búsquedas simultáneas en JKAnime dentro de una petición. |
+| `JK_SEARCH_BUDGET_MS` | `10000` | Tiempo máximo dedicado a buscar; pasado ese tiempo no se lanzan más etapas. |
+| `JK_CONCURRENCY` | `3` | Peticiones simultáneas a JKAnime en total (todas las peticiones de Nuvio). |
+| `HTTP_MAX_PER_HOST`, `HTTP_MAX_CONCURRENCY` | `4`, `16` | Peticiones simultáneas por servidor y en total. |
+| `STREAM_PROBE` | `false` | `true` comprueba cada enlace antes de mostrarlo (lista HLS o 1 byte del MP4). Más lento. |
 
 Si una credencial falta, es incorrecta o el servicio no responde, ese proveedor se omite y los
 demás siguen funcionando.
@@ -688,16 +697,52 @@ borra.
 >   dieron un enlace reproducible. Los que fallan aquí **no** son un fallo de identificación.
 > - `[stream] series …: no streams (motivo)`: no se pudo identificar o no hubo enlaces; el motivo
 >   explica qué falló.
-> - `[resolver] queries=["ao ashi", …] -> 0 JKAnime results`: qué se buscó en JKAnime y cuántos
->   resultados hubo.
+> - `[resolver] … confirmed at stage "alternatives" after 5 queries`: con qué búsqueda se
+>   verificó la entrada de JKAnime.
 
-Comandos de diagnóstico útiles (cámbialos por la IP o el episodio que corresponda):
+**La herramienta más útil es el modo diagnóstico**, que explica paso a paso un episodio concreto
+(el ID aparece en la línea `[stream]`):
+
+```bash
+npm run diagnose -- kitsu:50761:1
+```
+
+```text
+[IDENTITY] OK "Rich Girl Caretaker: …" (2026) TV, 12 episodes via kitsu
+[LINK] kitsu:50761 -> anilist:201514 (kitsu-mappings+yuna): CONFIRMED format+year 2026
+[SEARCH] fragments    "saijo no osewa" -> 1 results
+[CANDIDATE] OK   saijo-no-osewa "Saijo no Osewa" score=1 partial
+[MATCH] saijo-no-osewa episode 1 (kitsu, evidence probable)
+[SERVER] OK   Streamwish SUB: 1 link(s) hls (812 ms)
+[SERVER] FAIL Streamtape SUB: HTTP_404 (403 ms)
+[STREAMS] PARTIAL 6 links; 1 of 8 servers failed (the episode itself is fine)
+[STATUS] SUCCESS — streams found
+```
+
+*(Ejemplo ilustrativo.)* Muestra las fuentes de identificación, cada búsqueda en JKAnime con su
+número de resultados, cada candidato con el motivo por el que se aceptó o rechazó, cada servidor
+con su resultado y el tiempo por etapa. **Nunca muestra tus claves ni los enlaces de vídeo
+firmados** (solo el servidor y el formato), así que puedes compartir su salida al pedir ayuda.
+Opciones: `--numbering tvdb`, `--mapping absolute`, `--type movie`, `--json`, `--verbose`.
+
+| `[STATUS]` | Qué significa |
+|---|---|
+| `SUCCESS` | Hay enlaces. |
+| `NO_STREAMS` | El episodio existe, pero ningún servidor dio un enlace directo. |
+| `ANIME_NOT_FOUND` | Ninguna entrada de JKAnime se pudo verificar (título, año, formato y temporada). |
+| `AMBIGUOUS` | Varias entradas encajan igual de bien: por seguridad no se sirve ninguna. |
+| `EPISODE_NOT_FOUND` | El anime está, pero ese episodio no (aún no publicado o fuera del total). |
+| `BLOCKED` | JKAnime respondió con un desafío de Cloudflare (ver más abajo). |
+| `PARSER_CHANGED` | Una página de JKAnime ya no tiene la estructura esperada: hay que actualizar el addon. |
+| `IDENTITY_FAILED` | Ningún proveedor reconoce el ID (p. ej., falta `TVDB_API_KEY`). |
+
+Otros comandos útiles (cámbialos por la IP o el episodio que corresponda):
 
 ```bash
 curl http://127.0.0.1:3000/health                                  # ¿está vivo el servidor?
 curl http://127.0.0.1:3000/manifest.json                           # ¿responde el manifiesto?
 curl http://127.0.0.1:3000/stream/series/tt7441658:1:1.json         # ¿hay streams para un episodio?
-npm run live-check -- tt7441658:1:1                                 # diagnóstico completo
+npm run live-check -- tt7441658:1:1                                 # verificación real (muestra enlaces)
 ```
 
 <details>
@@ -727,15 +772,16 @@ abierta.
 1. ¿Está el servidor encendido? Ejecuta `curl http://127.0.0.1:3000/health`.
 2. ¿El addon aparece instalado en Nuvio con la URL correcta (IP y puerto)?
 3. Mira el **motivo** en la línea `no streams (…)` y búscalo en este apartado.
-4. Prueba el mismo episodio con `npm run live-check -- ID` (el ID aparece en esa misma línea).
+4. Ejecuta `npm run diagnose -- ID` (el ID aparece en esa misma línea).
 
 Causas habituales:
 - JKAnime no tiene ese anime o ese episodio todavía.
 - La numeración no coincide; prueba otra [modalidad de temporadas](#temporadas).
 - Ningún servidor de vídeo funcionó en ese momento.
 
-> Un resultado vacío se guarda **1 o 2 minutos** para no saturar JKAnime. Espera un poco antes
-> de reintentar.
+> Un resultado vacío se guarda **1 o 2 minutos** para no saturar JKAnime, y una búsqueda sin
+> resultados, 10 minutos. Espera un poco antes de reintentar. Para saber el motivo exacto, usa
+> `npm run diagnose -- ID`.
 
 </details>
 
@@ -792,21 +838,31 @@ Los servidores de vídeo cambian sus páginas con frecuencia. Cuando un servidor
 verás una línea con el motivo, por ejemplo:
 
 ```text
-[streams] ao-ashi-season-2 ep 1 · Streamtape: video eliminado o no disponible en ese servidor (HTTP 404) (…)
-[streams] ao-ashi-season-2 ep 1 · Filemoon: no se encontró un enlace directo (…)
+[streams] ao-ashi-season-2 ep 1 · Streamtape: HTTP_404 — HTTP 404: el servidor no encontró el vídeo o la página (eliminado o ruta cambiada)
+[streams] ao-ashi-season-2 ep 1 · Filemoon: UNSUPPORTED_FORMAT — formato del servidor no compatible con este extractor
 ```
 
-y ese servidor simplemente no aparece en la lista. Los demás siguen apareciendo.
+y ese servidor simplemente no aparece en la lista. Los demás siguen apareciendo. **El anime sí se
+identificó**: estos códigos nunca son un fallo de identificación.
 
-| Motivo | Qué significa |
+| Código | Qué significa |
 |---|---|
-| `video eliminado o no disponible en ese servidor (HTTP 404)` | El servidor ya no tiene ese vídeo (también pasa con el reproductor propio de JKAnime). **El anime sí se identificó**; no hay nada que corregir en la identificación. |
-| `no se encontró un enlace directo` | La página del servidor cambió y el extractor no reconoce el vídeo. |
-| `sin respuesta a tiempo` | El servidor tardó demasiado. Suele ser temporal. |
-| `bloqueado por Cloudflare` | Ver [Cloudflare](#problemas). |
+| `HTTP_404` | El servidor no encontró el vídeo **o** la página (puede estar eliminado o haber cambiado de dirección). |
+| `HTTP_410` | El servidor indica que el vídeo ya no existe. |
+| `HTTP_419` / `HTTP_429` | Sesión rechazada / demasiadas peticiones. Suele ser temporal. |
+| `HTTP_5XX` | Error interno del servidor de vídeo. |
+| `TIMEOUT` | Sin respuesta a tiempo (`EXTRACT_TIMEOUT_MS`); la petición se cancela. |
+| `BLOCKED` | Desafío anti-bots (Cloudflare). |
+| `PARSER_CHANGED` | La página cargó pero no tiene el formato esperado: el reproductor cambió. |
+| `UNSUPPORTED_FORMAT` | El servidor responde en un formato que el extractor no implementa. |
+| `INVALID_MEDIA_URL` | Se obtuvo algo, pero no es un MP4/HLS directo. |
+| `NO_MEDIA` | El servidor dice que el vídeo no está disponible. |
+| `EXTRACTOR_ERROR` | Error inesperado del extractor. |
 
-- **Filemoon** obtiene el vídeo desde la propia API de su reproductor. Si Filemoon cambia ese
-  sistema, dejará de funcionar hasta que se actualice el extractor.
+- **Filemoon** obtiene el vídeo desde la propia API de su reproductor (cifrado AES-GCM). Desde
+  esta versión se elige AES-128, 192 o 256 según la longitud de la clave, como la implementación
+  de referencia; antes solo se aceptaba AES-256 y aparecía `Invalid key length`. Si Filemoon usa
+  otro formato, verás `UNSUPPORTED_FORMAT` solo en ese servidor.
 - Si un servidor falla siempre, abre un *issue* en GitHub con el nombre del servidor y el
   episodio. **No** incluyas tus credenciales ni tu archivo `.env`.
 
@@ -817,8 +873,9 @@ y ese servidor simplemente no aparece en la lista. Los demás siguen apareciendo
 
 Los enlaces de los servidores de vídeo son **temporales**.
 
-- JKAnimeNuvio guarda la lista de enlaces **10 minutos**, y Nuvio puede guardarla en su propia
-  caché.
+- JKAnimeNuvio guarda la lista de enlaces **10 minutos como máximo**, y menos cuando un enlace
+  declara que caduca antes (parámetros `expires`, `X-Amz-Expires` o `s`+`e`): nunca se sirve de
+  la caché un enlace a punto de caducar. Nuvio puede guardar la lista en su propia caché.
 - Si un enlace caducó, **cierra y vuelve a abrir el episodio** pasados unos minutos, o
   **reinicia JKAnimeNuvio** (Ctrl + C y `npm start`) para vaciar su caché.
 - Prueba otro servidor de la lista.
@@ -828,18 +885,23 @@ Los enlaces de los servidores de vídeo son **temporales**.
 <details>
 <summary><b>🔢 <code>HTTP 419</code> de JKAnime en los registros</b></summary>
 
-Verás una línea como `[jkanime] episode count unavailable for SLUG: HTTP 419 …`.
+Verás una línea como `[jkanime] episode count unavailable for SLUG: HTTP_419`.
 
-Ese error viene de una consulta interna de JKAnime que caduca con facilidad. JKAnimeNuvio solo la
-usa para **contar los episodios** cuando la ficha del anime no muestra el total. **No impide
-encontrar episodios**: solo se omite esa comprobación adicional. No necesitas hacer nada.
+JKAnime es una aplicación Laravel: esa consulta interna (la que su propia web usa para paginar los
+episodios) exige el token de la ficha **y** la cookie de sesión que la acompaña; sin ella responde
+419. Desde esta versión, JKAnimeNuvio reenvía en esa consulta las cookies que la ficha acaba de
+fijar, como haría el navegador (sin guardarlas). **Esta corrección no se ha podido comprobar contra
+JKAnime**: si el 419 persiste, el efecto es el de antes.
+
+Solo se usa para **contar los episodios** cuando la ficha no muestra el total. **No impide
+encontrar episodios.** No necesitas hacer nada.
 
 </details>
 
 <details>
 <summary><b>📦 Problemas al instalar las dependencias (<code>npm ci</code>)</b></summary>
 
-- **Node.js demasiado antiguo:** `node -v` debe mostrar v20 o superior.
+- **Node.js demasiado antiguo:** `node -v` debe mostrar v22 o superior.
 - **Termux:** ejecuta `pkg update && pkg upgrade -y` y vuelve a intentarlo.
 - **Instalación a medias:** borra la carpeta de dependencias y repite:
   - Termux, Linux y macOS: `rm -rf node_modules && npm ci --omit=dev`
@@ -895,19 +957,32 @@ JKAnimeNuvio incluye dos tipos de comprobaciones. **No son lo mismo**:
 npm test
 ```
 
-Ejecuta 87 pruebas en unos segundos, sin conexión. Entre otros casos, cubren:
-- Las numeraciones de Black Clover.
-- Gensou Suikoden identificado por IMDb y por AniList.
-- Errores de autenticación y fuentes caídas.
-- Formato de los streams para Nuvio.
+Ejecuta 141 pruebas en unos segundos, sin conexión. Entre otros casos, cubren:
+- Una matriz de identificación: Ao Ashi T1 y T2, Rich Girl Caretaker, Koori no Jouheki T1 y T2,
+  Black Clover, Gensou Suikoden, remakes, títulos muy parecidos, OVAs, películas y episodios
+  inexistentes.
+- Seguridad HTTP: redirecciones hacia la red interna, IPv6 especiales, DNS, respuestas enormes,
+  tiempos límite y registros sin credenciales.
+- El HTML real de JKAnime (búsqueda, ficha y episodio, archivados en 2026).
+- Errores de autenticación, fuentes caídas y formato de los streams para Nuvio.
 
-Todas deben terminar en `# fail 0`. Se ejecutan también automáticamente en GitHub Actions con
-Node.js 20 y 22.
+Todas deben terminar en `fail 0`. Se ejecutan también automáticamente en GitHub Actions con
+Node.js 22 y 24.
 
 Los datos de prueba combinan:
-- **Copias reales** de respuestas de Cinemeta, AniList, yuna y ani.zip.
-- **Datos sintéticos**, claramente marcados, para TMDB, TVDB y las páginas de JKAnime y de los
-  servidores de vídeo.
+- **Copias reales** de respuestas de Cinemeta, AniList, Kitsu, yuna y ani.zip, y páginas reales de
+  JKAnime archivadas en web.archive.org.
+- **Datos sintéticos**, claramente marcados, para TMDB, TVDB, el resto de páginas de JKAnime y los
+  servidores de vídeo. **Que una prueba simulada pase no confirma cómo responde JKAnime hoy.**
+
+Banco de evaluación (compara la identificación de dos versiones del código en la red simulada):
+
+```bash
+git worktree add ../jk-old main && (cd ../jk-old && npm ci)
+node scripts/evaluate.js --old ../jk-old
+```
+
+Resultados en [`docs/EVALUACION.md`](docs/EVALUACION.md).
 
 ### Verificación real
 
@@ -1065,7 +1140,8 @@ lib/
 ├── identification/             Identificación de anime
 │   ├── identity.js             Identidad desde TMDB / TVDB / Cinemeta + verificación de AniList
 │   ├── resolver.js             ID → entrada y episodio de JKAnime (temporadas y numeraciones)
-│   ├── titles.js               Normalización de títulos y marcadores de temporada
+│   ├── queries.js              Plan de búsqueda por etapas (títulos, alternativos, variantes, fragmentos)
+│   ├── titles.js               Normalización, romanización, marcadores de temporada y año
 │   └── episodes.js             IDs de Stremio y numeración absoluta
 ├── providers/                  Proveedores de metadatos internos (solo para identificar)
 │   └── tmdb, tvdb, anilist, kitsu, cinemeta, relations (yuna, ani.zip), common
@@ -1073,11 +1149,19 @@ lib/
 │   ├── site.js                 Búsqueda, ficha y página de episodio
 │   └── extractors.js           Servidores de vídeo → enlaces MP4/HLS
 └── utils/
-    ├── cache.js                Caché TTL con deduplicación de peticiones
-    └── http.js                 HTTP con timeouts, protección SSRF y ocultación de credenciales
+    ├── cache.js                Caché TTL con deduplicación y duración según el contenido
+    ├── http.js                 HTTP seguro: redirecciones validadas, DNS, tamaño, timeouts, límites
+    ├── ip.js                   Rangos IP internos y especiales (IPv4/IPv6)
+    ├── errors.js               Códigos de error comunes
+    ├── expiry.js               Caducidad declarada de enlaces firmados
+    ├── context.js              Cancelación y traza por petición (AsyncLocalStorage)
+    └── limiter.js              Límite de concurrencia
 test/                           Pruebas (node:test) y datos de prueba (fixtures/)
-test-support/helpers.js         Red simulada para las pruebas
+test-support/                   Red simulada (helpers.js) y casos del banco de evaluación
+scripts/diagnose.js             Diagnóstico paso a paso de un ID (npm run diagnose)
+scripts/evaluate.js             Banco de evaluación: código antiguo frente al nuevo
 scripts/live-check.js           Verificación real contra los servicios
+docs/AUDITORIA.md               Auditoría técnica (hallazgos, evidencia, riesgo)
 ```
 
 **Reglas de identificación**
@@ -1094,7 +1178,20 @@ scripts/live-check.js           Verificación real contra los servicios
 
   Caso real: ambas bases asignan Black Clover (`tt7441658`) a AniList 87528, un especial de
   2016. El addon lo rechaza.
-- Ante ambigüedad, el resultado es `streams: []`.
+- Para `kitsu:`/`mal:`/`anilist:`, cada enlace con otra base tiene un nivel de evidencia:
+  **confirmado** (formato y año coinciden), **probable** (falta un año, pero los títulos coinciden
+  y lo declaran dos fuentes), **contradictorio** (formato, año o temporada distintos; rechazado).
+  **La falta de año nunca cuenta como coincidencia.**
+- La búsqueda en JKAnime va por etapas y se detiene en cuanto una entrada queda verificada:
+  títulos propios → alternativos verificados → variantes de romanización (`Jyouheki`/`Jouheki`)
+  → fragmentos distintivos de los títulos largos (`saijo no osewa`, `rich girl caretaker`).
+- Una entrada de JKAnime se acepta solo si el título completo coincide (con sus marcadores de
+  temporada, parte y formato) **y** el año de su ficha coincide. Si solo coincide el nombre
+  principal, además debe coincidir el año exacto, el formato y ser el único candidato. Sin año
+  en la ficha, no se acepta. Un año entre paréntesis en el título (`Fruits Basket (2019)`)
+  distingue los remakes.
+- Ante ambigüedad, el resultado es `streams: []`: **es preferible no mostrar nada que reproducir
+  un episodio de otro anime.**
 
 </details>
 

@@ -1,5 +1,84 @@
 # Historial de versiones
 
+## 🚧 Sin publicar — Fiabilidad de la identificación y seguridad
+
+Cambios de la rama `improvement/resolver-reliability`. **No es una versión publicada**: no tiene
+etiqueta ni Release. Diagnóstico completo en [`docs/AUDITORIA.md`](docs/AUDITORIA.md) y
+comparación con v0.2.1 en [`docs/EVALUACION.md`](docs/EVALUACION.md).
+
+> **Regla de diseño:** es preferible no mostrar ningún stream que reproducir un episodio de otro
+> anime. Varias reglas nuevas devuelven *nada* donde v0.2.1 adivinaba.
+
+### 🔍 Identificación
+
+- **Búsqueda por etapas** con parada temprana: títulos propios → alternativos verificados →
+  variantes de romanización → fragmentos distintivos de los títulos largos. Límites
+  configurables: `JK_MAX_QUERIES`, `JK_SEARCH_CONCURRENCY`, `JK_SEARCH_BUDGET_MS`.
+- **Títulos larguísimos:** para *Rich Girl Caretaker* (`kitsu:50761`) se generan por reglas
+  generales `rich girl caretaker`, `saijo no osewa`, `saijo no osewa takane no hanadarake` y
+  `takane no hanadarake`. Una coincidencia solo por el nombre principal exige el año exacto, el
+  mismo formato y temporada y un único candidato.
+- **Romanización:** `Jyouheki`/`Jouheki`/`Joheki`, `Ojou-sama`/`Ojousama`, `wo`/`o` se reconocen
+  como el mismo título y se buscan como variantes.
+- **El año ya no se presupone:** sin año en la ficha de JKAnime la entrada no se acepta; la falta
+  de año en un enlace entre bases no cuenta como coincidencia (niveles *confirmado*, *probable*,
+  *contradictorio*). El año entre paréntesis del título (`Fruits Basket (2019)`) separa los
+  *remakes*.
+- **Temporadas del mismo año** (*Koori no Jouheki*, primavera y otoño de 2026): una entrada de
+  AniList de otra temporada ya no aporta títulos.
+- OVAs/especiales solo con fichas OVA/Especial; episodio fuera del total conocido =
+  `EPISODE_NOT_FOUND` sin consultar JKAnime.
+- Los títulos abreviados de Kitsu (a veces en otros idiomas) pasan a ser alternativos.
+
+### 🌐 JKAnime
+
+- Página de búsqueda irreconocible = `PARSER_CHANGED` (antes: «sin resultados» durante 1 hora).
+- Caché: búsqueda con resultados 1 h, sin resultados 10 min; ficha en emisión o por estrenar
+  30 min, finalizada 6 h. Los errores no se guardan.
+- Estado *Por estrenar*, título alternativo de la ficha (sirve como evidencia adicional).
+- **HTTP 419:** la consulta del recuento de episodios reenvía la cookie de sesión de la ficha,
+  como el navegador. *Causa identificada en el HTML real; corrección sin verificar contra
+  JKAnime.*
+- Límite global de peticiones simultáneas (`JK_CONCURRENCY`) y parada en el primer desafío de
+  Cloudflare (nunca se intenta eludir).
+
+### ▶️ Servidores de vídeo
+
+- Códigos de error estables por servidor (`HTTP_404`, `HTTP_419`, `HTTP_429`, `HTTP_5XX`,
+  `TIMEOUT`, `BLOCKED`, `PARSER_CHANGED`, `UNSUPPORTED_FORMAT`, `INVALID_MEDIA_URL`, `NO_MEDIA`,
+  `EXTRACTOR_ERROR`); un 404 ya no se presenta como «vídeo eliminado».
+- **Filemoon `Invalid key length`:** AES-GCM elegido por longitud de clave (16/24/32 bytes), igual
+  que la implementación de referencia; otro tamaño = `UNSUPPORTED_FORMAT` solo en ese servidor.
+- El tiempo límite de cada servidor cancela de verdad sus peticiones.
+- La caché de respuestas nunca supera la caducidad declarada de los enlaces firmados.
+- `STREAM_PROBE=true` (opcional): comprobación ligera de cada enlace, sin HEAD ni descargas.
+
+### 🔒 Seguridad HTTP
+
+- Cada redirección se valida **antes** de conectarse (antes se seguía y luego se comprobaba).
+- Se rechazan IPv4 incrustadas en IPv6 (`[::ffff:127.0.0.1]`, NAT64, 6to4), rangos especiales,
+  nombres de una sola etiqueta y nombres que resuelven a direcciones internas.
+- Respuestas leídas como flujo con límite de 5 MB; tiempo límite que cubre también el cuerpo.
+- Límite de peticiones simultáneas por servidor y en total; los registros no muestran consultas
+  de URLs (tokens firmados).
+
+### 🩺 Herramientas
+
+- `npm run diagnose -- <id>`: diagnóstico paso a paso, sin claves ni enlaces firmados.
+- `scripts/evaluate.js`: banco de evaluación de la identificación (código antiguo frente al nuevo).
+
+### 🟩 Node.js
+
+- Node.js 20 llegó al fin de soporte el 30-04-2026: se requiere **Node.js 22 o superior**. CI en
+  Node 22 y 24 con `actions/checkout@v7` y `actions/setup-node@v7`.
+
+### 🧪 Pruebas
+
+141 pruebas (87 en v0.2.1). Nuevas: seguridad HTTP, HTML real de JKAnime archivado, matriz de
+casos con datos reales (Ao Ashi T1/T2, Rich Girl Caretaker, Koori no Jouheki T1/T2, Black Clover,
+Gensou Suikoden, remakes, OVAs, películas, títulos parecidos), diagnóstico y banco de evaluación.
+Las respuestas de JKAnime de los casos sin copia archivada son simuladas y están indicadas.
+
 ## 🎌 JKAnimeNuvio v0.2.1 — Mejoras de identificación y compatibilidad
 
 Actualización de **JKAnimeNuvio v0.2.0** centrada en reconocer animes cuyos títulos se escriben

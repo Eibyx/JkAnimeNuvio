@@ -240,7 +240,7 @@ serie. **Corrección:** las entradas OVA/especial solo aceptan fichas OVA/Especi
 
 `kitsu:ID:99` con 24 episodios conocidos consulta JKAnime igualmente (después `getEpisode` lo detecta
 por la redirección). **Corrección:** rechazo inmediato `EPISODE_NOT_FOUND` si el número supera el
-total conocido de una entrada finalizada.
+total conocido de la entrada (Kitsu/AniList), o el de una ficha finalizada de JKAnime.
 
 ## JKAnime (`lib/jkanime/site.js`)
 
@@ -323,3 +323,22 @@ que envía hoy.
 - Longitud real de la clave de Filemoon hoy (ver E2).
 - Si el buscador de JKAnime tolera variantes (sin acentos, guiones): la red simulada es literal, el
   caso más exigente.
+
+## Estado tras los cambios de esta rama
+
+| ID | Estado | Dónde |
+|---|---|---|
+| S1–S4, S6 | Corregido, con pruebas | `lib/utils/http.js`, `lib/utils/ip.js`, `test/http.test.js` |
+| S3 | Corregido; riesgo residual TOCTOU documentado | `assertPublicHost` |
+| S5 | Corregido (cancelación real por servidor) | `lib/stremio/streams.js`, `lib/utils/context.js` |
+| I1, I5, I6 | Corregido | `lib/identification/queries.js`, `resolver.js` (`findEntry`) |
+| I2, I3, I4, I7, I8 | Corregido | `resolver.js` (`verifyCandidate`, `linkEvidence`, `entriesForSeason`) |
+| J1, J2, J4, J5 | Corregido, probado con HTML real archivado | `lib/jkanime/site.js`, `test/jkanime.test.js` |
+| J3 | Corrección aplicada **sin verificar** contra JKAnime | `sessionCookies` en `site.js` |
+| C1 | Corregido | `lib/utils/expiry.js`, `lib/app.js` |
+| E1 | Corregido | `lib/utils/errors.js`, `lib/stremio/streams.js` |
+| E2 | Corregido según la referencia; formato real **sin verificar** | `decryptFilemoon` |
+| T1 | 87 → 141 pruebas | `test/` |
+| N1 | Node 22/24 en CI; `engines >=22` | `.github/workflows/ci.yml`, `package.json` |
+
+Comparación de la identificación antes y después: [`EVALUACION.md`](EVALUACION.md).
