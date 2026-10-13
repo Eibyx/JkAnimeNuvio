@@ -1,0 +1,418 @@
+{
+ "kitsu:anime:44629": {
+  "data": {
+   "id": "44629",
+   "type": "anime",
+   "attributes": {
+    "titles": {
+     "en_jp": "Ao Ashi",
+     "ja_jp": "アオアシ"
+    },
+    "canonicalTitle": "Ao Ashi",
+    "abbreviatedTitles": [
+     "Aoashi"
+    ],
+    "subtype": "TV",
+    "startDate": "2022-04-09",
+    "endDate": "2022-09-24",
+    "episodeCount": 24,
+    "status": "finished"
+   }
+  }
+ },
+ "kitsu:mappings:44629": {
+  "data": [
+   {
+    "type": "mappings",
+    "attributes": {
+     "externalSite": "myanimelist/anime",
+     "externalId": "49052"
+    }
+   },
+   {
+    "type": "mappings",
+    "attributes": {
+     "externalSite": "anilist/anime",
+     "externalId": "134732"
+    }
+   }
+  ]
+ },
+ "yuna:kitsu:44629": {
+  "anilist": 134732,
+  "myanimelist": 49052,
+  "kitsu": 44629,
+  "anidb": 16358,
+  "imdb": "tt15792808",
+  "themoviedb": 126437,
+  "thetvdb": 407840
+ },
+ "anizip:kitsu_id:44629": {
+  "titles": {
+   "x-jat": "Aoashi",
+   "ja": "アオアシ",
+   "en": "Aoashi",
+   "de": "Aoashi",
+   "fr": "Ao Ashi - Playmaker",
+   "ru": "Аоаси",
+   "zh-Hant": "青之蘆葦",
+   "zh-Hans": "青之芦苇"
+  },
+  "mappings": {
+   "animeplanet_id": "aoashi",
+   "kitsu_id": 44629,
+   "mal_id": 49052,
+   "type": "TV",
+   "anilist_id": 134732,
+   "anisearch_id": 16339,
+   "anidb_id": 16358,
+   "notifymoe_id": null,
+   "livechart_id": 10612,
+   "thetvdb_id": 407840,
+   "imdb_id": null,
+   "themoviedb_id": "126437"
+  }
+ },
+ "kitsu:anime:50761": {
+  "data": {
+   "id": "50761",
+   "type": "anime",
+   "attributes": {
+    "titles": {
+     "en": "Rich Girl Caretaker: I'm Secretly the Caregiver of the Most Popular Girl in This Rich Kid School",
+     "en_jp": "Saijo no Osewa: Takane no Hanadarake na Meimonkou de, Gakuin Ichi no Ojousama (Seikatsu Nouryoku Kaimu) wo Kagenagara Osewa suru Koto ni Narimashita",
+     "ja_jp": "才女のお世話 高嶺の花だらけな名門校で、学院一のお嬢様(生活能力皆無)を陰ながらお世話することになりました"
+    },
+    "canonicalTitle": "Saijo no Osewa: Takane no Hanadarake na Meimonkou de, Gakuin Ichi no Ojousama (Seikatsu Nouryoku Kaimu) wo Kagenagara Osewa suru Koto ni Narimashita",
+    "abbreviatedTitles": [
+     "Das (fast) perfekte Fräulein und sein Butler",
+     "才女的侍從 在滿是高嶺之花的貴族學校暗中照顧（毫無生活自理能力的）學院第一大小姐",
+     "ผู้ดูแลเด็กสาว"
+    ],
+    "subtype": "TV",
+    "startDate": "2026-07-05",
+    "endDate": "2026-09-20",
+    "episodeCount": 12,
+    "status": "finished"
+   }
+  }
+ },
+ "kitsu:mappings:50761": {
+  "data": [
+   {
+    "type": "mappings",
+    "attributes": {
+     "externalSite": "anilist/anime",
+     "externalId": "201514"
+    }
+   },
+   {
+    "type": "mappings",
+    "attributes": {
+     "externalSite": "myanimelist/anime",
+     "externalId": "62876"
+    }
+   }
+  ]
+ },
+ "yuna:kitsu:50761": {
+  "anilist": 201514,
+  "myanimelist": 62876,
+  "kitsu": 50761,
+  "anidb": 19690,
+  "imdb": "tt41278600",
+  "themoviedb": 312849,
+  "thetvdb": 470406
+ },
+ "anizip:kitsu_id:50761": {
+  "titles": {},
+  "mappings": {
+   "animeplanet_id": "rich-girl-caretaker-im-secretly-the-caregiver-of-the-most-popular-girl-in-this-rich-kid-school",
+   "kitsu_id": 50761,
+   "mal_id": 62876,
+   "type": "TV",
+   "anilist_id": null,
+   "anisearch_id": null,
+   "anidb_id": null,
+   "notifymoe_id": null,
+   "livechart_id": 13377,
+   "thetvdb_id": null,
+   "imdb_id": null,
+   "themoviedb_id": null
+  }
+ },
+ "kitsu:anime:50827": {
+  "data": {
+   "id": "50827",
+   "type": "anime",
+   "attributes": {
+    "titles": {
+     "en": "The Ramparts of Ice Season 2",
+     "en_jp": "Koori no Jouheki 2nd Season",
+     "ja_jp": "氷の城壁 第2期"
+    },
+    "canonicalTitle": "Koori no Jouheki 2nd Season",
+    "abbreviatedTitles": [],
+    "subtype": "TV",
+    "startDate": "2026-10-01",
+    "endDate": null,
+    "episodeCount": null,
+    "status": "current"
+   }
+  }
+ },
+ "kitsu:mappings:50827": {
+  "data": [
+   {
+    "type": "mappings",
+    "attributes": {
+     "externalSite": "anilist/anime",
+     "externalId": "213805"
+    }
+   },
+   {
+    "type": "mappings",
+    "attributes": {
+     "externalSite": "myanimelist/anime",
+     "externalId": "64534"
+    }
+   }
+  ]
+ },
+ "yuna:kitsu:50827": {
+  "anilist": 213805,
+  "myanimelist": 64534,
+  "kitsu": 50827,
+  "anidb": 20168,
+  "imdb": "tt39123061",
+  "themoviedb": 283428,
+  "thetvdb": 459627
+ },
+ "anizip:kitsu_id:50827": {
+  "titles": {},
+  "mappings": {
+   "animeplanet_id": null,
+   "kitsu_id": 50827,
+   "mal_id": 64534,
+   "type": "TV",
+   "anilist_id": 213805,
+   "anisearch_id": null,
+   "anidb_id": null,
+   "notifymoe_id": null,
+   "livechart_id": null,
+   "thetvdb_id": null,
+   "imdb_id": null,
+   "themoviedb_id": null
+  }
+ },
+ "yuna:anilist:134732": {
+  "anilist": 134732,
+  "myanimelist": 49052,
+  "kitsu": 44629,
+  "anidb": 16358,
+  "imdb": "tt15792808",
+  "themoviedb": 126437,
+  "thetvdb": 407840
+ },
+ "anizip:anilist_id:134732": {
+  "titles": {
+   "x-jat": "Aoashi",
+   "ja": "アオアシ",
+   "en": "Aoashi",
+   "de": "Aoashi",
+   "fr": "Ao Ashi - Playmaker",
+   "ru": "Аоаси",
+   "zh-Hant": "青之蘆葦",
+   "zh-Hans": "青之芦苇"
+  },
+  "mappings": {
+   "animeplanet_id": "aoashi",
+   "kitsu_id": 44629,
+   "mal_id": 49052,
+   "type": "TV",
+   "anilist_id": 134732,
+   "anisearch_id": 16339,
+   "anidb_id": 16358,
+   "notifymoe_id": null,
+   "livechart_id": 10612,
+   "thetvdb_id": 407840,
+   "imdb_id": null,
+   "themoviedb_id": "126437"
+  }
+ },
+ "yuna:anilist:201514": {
+  "anilist": 201514,
+  "myanimelist": 62876,
+  "kitsu": 50761,
+  "anidb": 19690,
+  "imdb": "tt41278600",
+  "themoviedb": 312849,
+  "thetvdb": 470406
+ },
+ "anizip:anilist_id:201514": {
+  "titles": {
+   "x-jat": "Saijo no Osewa: Takane no Hana-darake na Meimonkou de, Gakuin Ichi no Ojou-sama (Seikatsu Nouryoku Kaimu) o Kagenagara Osewa Suru Koto ni Narimashita",
+   "ja": "才女のお世話 高嶺の花だらけな名門校で, 学院一のお嬢様(生活能力皆無)を陰ながらお世話することになりました",
+   "en": "Rich Girl Caretaker: I`m Secretly the Caregiver of the Most Popular Girl in This Rich Kid School",
+   "zh-Hant": "才女的侍從 在滿是高嶺之花的貴族學校暗中照顧（毫無生活自理能力的）學院第一大小姐",
+   "zh-Hans": "才女的侍从 在满是高岭之花的贵族学校暗中照顾（毫无生活自理能力的）学院第一大小姐"
+  },
+  "mappings": {
+   "animeplanet_id": null,
+   "kitsu_id": null,
+   "mal_id": 62876,
+   "type": "TV",
+   "anilist_id": 201514,
+   "anisearch_id": null,
+   "anidb_id": 19690,
+   "notifymoe_id": null,
+   "livechart_id": null,
+   "thetvdb_id": 470406,
+   "imdb_id": "tt41278600",
+   "themoviedb_id": "312849"
+  }
+ },
+ "yuna:anilist:213805": {
+  "anilist": 213805,
+  "myanimelist": 64534,
+  "kitsu": 50827,
+  "anidb": 20168,
+  "imdb": "tt39123061",
+  "themoviedb": 283428,
+  "thetvdb": 459627
+ },
+ "anizip:anilist_id:213805": {
+  "titles": {},
+  "mappings": {
+   "animeplanet_id": null,
+   "kitsu_id": 50827,
+   "mal_id": 64534,
+   "type": "TV",
+   "anilist_id": 213805,
+   "anisearch_id": null,
+   "anidb_id": null,
+   "notifymoe_id": null,
+   "livechart_id": null,
+   "thetvdb_id": null,
+   "imdb_id": null,
+   "themoviedb_id": null
+  }
+ },
+ "yuna:anilist:186497": {
+  "anilist": 186497,
+  "myanimelist": 60852,
+  "kitsu": 50465,
+  "anidb": 19139,
+  "imdb": "tt39123061",
+  "themoviedb": 283428,
+  "thetvdb": 459627
+ },
+ "anizip:anilist_id:186497": {
+  "titles": {
+   "x-jat": "Koori no Jyōheki",
+   "ja": "氷の城壁",
+   "en": "The Ramparts of Ice",
+   "pt-BR": "Parede de Gelo",
+   "cs": "Ledové hradby",
+   "zh-Hant": "冰之城牆",
+   "zh-Hans": "冰之城墙",
+   "es-419": "Rompiendo el hielo"
+  },
+  "mappings": {
+   "animeplanet_id": "the-ramparts-of-ice",
+   "kitsu_id": 50465,
+   "mal_id": 60852,
+   "type": "TV",
+   "anilist_id": 186497,
+   "anisearch_id": 20149,
+   "anidb_id": 19139,
+   "notifymoe_id": null,
+   "livechart_id": 13028,
+   "thetvdb_id": 459627,
+   "imdb_id": "tt39123061",
+   "themoviedb_id": "283428"
+  }
+ },
+ "anilist:media": [
+  {
+   "id": 134732,
+   "idMal": 49052,
+   "format": "TV",
+   "episodes": 24,
+   "season": "SPRING",
+   "seasonYear": 2022,
+   "startDate": {
+    "year": 2022
+   },
+   "title": {
+    "romaji": "Aoashi",
+    "english": "Aoashi",
+    "native": "アオアシ"
+   },
+   "synonyms": [
+    "AOASHI แข็งเด็กหัวใจนักสู้",
+    "أواشي",
+    "Ao Ashi - Playmaker"
+   ]
+  },
+  {
+   "id": 201514,
+   "idMal": 62876,
+   "format": "TV",
+   "episodes": 12,
+   "season": "SUMMER",
+   "seasonYear": 2026,
+   "startDate": {
+    "year": 2026
+   },
+   "title": {
+    "romaji": "Saijo no Osewa: Takane no Hanadarake na Meimonkou de, Gakuin Ichi no Ojou-sama (Seikatsu Nouryoku Kaimu) wo Kagenagara Osewa suru Koto ni Narimashita",
+    "english": "Rich Girl Caretaker: I'm Secretly the Caregiver of the Most Popular Girl in This Rich Kid School",
+    "native": "才女のお世話 高嶺の花だらけな名門校で、学院一のお嬢様(生活能力皆無)を陰ながらお世話することになりました"
+   },
+   "synonyms": [
+    "Das (fast) perfekte Fräulein und sein Butler",
+    "才女的侍從 在滿是高嶺之花的貴族學校暗中照顧（毫無生活自理能力的）學院第一大小姐",
+    "ผู้ดูแลเด็กสาว"
+   ]
+  },
+  {
+   "id": 213805,
+   "idMal": 64534,
+   "format": "TV",
+   "episodes": null,
+   "season": "FALL",
+   "seasonYear": 2026,
+   "startDate": {
+    "year": 2026
+   },
+   "title": {
+    "romaji": "Koori no Jouheki 2nd Season",
+    "english": "The Ramparts of Ice Season 2",
+    "native": "氷の城壁 第2期"
+   },
+   "synonyms": []
+  },
+  {
+   "id": 186497,
+   "idMal": 60852,
+   "format": "TV",
+   "episodes": 14,
+   "season": "SPRING",
+   "seasonYear": 2026,
+   "startDate": {
+    "year": 2026
+   },
+   "title": {
+    "romaji": "Koori no Jouheki",
+    "english": "The Ramparts of Ice",
+    "native": "氷の城壁"
+   },
+   "synonyms": [
+    "Parede de Gelo",
+    "Стены изо льда",
+    "ปราการน้ำแข็งแห่งหัวใจ"
+   ]
+  }
+ ]
+}

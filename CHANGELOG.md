@@ -1,5 +1,116 @@
 # Historial de versiones
 
+## 🎌 JKAnimeNuvio v0.3.0 — Identificación inteligente, seguridad y confiabilidad
+
+Actualización centrada en **encontrar el anime correcto** (también con títulos japoneses muy
+largos o escritos de otra forma), en **no equivocarse nunca de anime ni de temporada**, y en la
+seguridad y estabilidad del servidor. Diagnóstico técnico completo en
+[`docs/AUDITORIA.md`](docs/AUDITORIA.md); comparación con v0.2.1 en
+[`docs/EVALUACION.md`](docs/EVALUACION.md).
+
+> **Regla de diseño:** es preferible no mostrar ningún stream que reproducir un episodio de otro
+> anime. En algunos casos dudosos, v0.3.0 devuelve una lista vacía donde v0.2.1 adivinaba.
+
+> [!IMPORTANT]
+> **Requiere Node.js 22 o superior.** Node.js 20 llegó al fin de su soporte (30-04-2026) y deja de
+> estar soportado por JKAnimeNuvio.
+
+### 🔍 Identificación
+
+- **Búsqueda progresiva por etapas**, que se detiene en cuanto una entrada de JKAnime queda
+  verificada: títulos propios → títulos alternativos verificados → variantes de romanización →
+  fragmentos distintivos. Límites configurables: `JK_MAX_QUERIES`, `JK_SEARCH_CONCURRENCY`,
+  `JK_SEARCH_BUDGET_MS`.
+- **Títulos japoneses largos.** Consultas abreviadas generadas por reglas generales, sin listas
+  fijas por anime. Para *Rich Girl Caretaker* (`kitsu:50761`): `rich girl caretaker`,
+  `saijo no osewa`, `saijo no osewa takane no hanadarake` y `takane no hanadarake`.
+- **Títulos alternativos:** el título alternativo de la ficha de JKAnime y los títulos abreviados
+  de Kitsu se usan como evidencia y como búsquedas alternativas.
+- **Identificación cruzada** entre Kitsu, AniList, MAL, yuna, ani.zip, Cinemeta, TMDB y TVDB con
+  niveles de evidencia: *confirmado*, *probable* o *contradictorio* (rechazado). La falta de año
+  ya no cuenta como coincidencia.
+- **Validación más estricta de temporadas:** las entradas de AniList de otra temporada del mismo
+  año (p. ej. *Koori no Jouheki*, primavera y otoño de 2026) ya no aportan títulos; `2nd Cour`,
+  `Part 2`, OVAs, especiales y películas se distinguen siempre.
+- **Prevención de coincidencias incorrectas:** sin año visible en la ficha de JKAnime, la entrada
+  no se acepta; el año entre paréntesis del título (`Fruits Basket (2019)`) distingue los
+  *remakes*; una coincidencia solo por el nombre principal exige el año exacto, el mismo formato y
+  temporada y un único candidato; un subtítulo distinto (otro arco) nunca coincide; un episodio
+  fuera del total conocido se rechaza (`EPISODE_NOT_FOUND`).
+- **Diferencias de romanización:** `Jyouheki`/`Jouheki`/`Joheki`, `Ojou-sama`/`Ojousama` y
+  `wo`/`o` se reconocen como el mismo título.
+
+### ▶️ Reproducción
+
+- **Errores aislados por servidor** y clasificados con códigos estables (`HTTP_404`, `HTTP_419`,
+  `HTTP_429`, `HTTP_5XX`, `TIMEOUT`, `BLOCKED`, `PARSER_CHANGED`, `UNSUPPORTED_FORMAT`,
+  `INVALID_MEDIA_URL`, `NO_MEDIA`, `EXTRACTOR_ERROR`). Un 404 ya no se presenta como «vídeo
+  eliminado».
+- **Cancelación real** de las peticiones de un servidor que supera su tiempo límite, y de toda la
+  petición de Nuvio a los 25 s.
+- **Enlaces temporales:** la caché nunca supera la caducidad que declaran los enlaces firmados
+  (`expires`, `X-Amz-*`, `s`+`e`). Comprobación ligera opcional con `STREAM_PROBE=true`.
+- **Filemoon:** el descifrado elige AES-128/192/256-GCM según la longitud de la clave, como la
+  implementación de referencia (causa del error `Invalid key length`). Un formato distinto queda
+  aislado en ese servidor como `UNSUPPORTED_FORMAT`.
+- **Solicitudes a JKAnime:** una página irreconocible se detecta como `PARSER_CHANGED` (antes se
+  guardaba una hora como «sin resultados»); caché según contenido (búsqueda 1 h, sin resultados
+  10 min, ficha en emisión 30 min, finalizada 6 h); estado «Por estrenar»; límite global de
+  peticiones simultáneas (`JK_CONCURRENCY`); la búsqueda se detiene en el primer desafío de
+  Cloudflare (nunca se intenta eludir). El recuento de episodios reenvía la cookie de sesión de la
+  ficha (posible corrección del HTTP 419, **sin verificar**).
+
+### 🔒 Seguridad
+
+- **Validación de URLs y redirecciones:** cada redirección se valida antes de conectarse; las
+  credenciales y cookies no pasan a otro origen.
+- **Direcciones privadas:** se rechazan IPs internas y especiales, incluidas IPv4 incrustadas en
+  IPv6 (`[::ffff:127.0.0.1]`, NAT64, 6to4) y nombres que resuelven a direcciones internas.
+  *Limitación residual documentada:* `fetch` vuelve a resolver el nombre al conectar, así que un
+  servidor DNS hostil que cambie su respuesta en milisegundos (*DNS rebinding*) no queda
+  totalmente excluido.
+- **Límites de concurrencia** por servidor y en total.
+- **Tamaño de respuesta** limitado a 5 MB, leído como flujo.
+- **Credenciales y enlaces firmados** fuera de los registros (solo origen y ruta).
+
+### 🩺 Herramientas
+
+- **`npm run diagnose -- <id>`:** diagnóstico detallado de identificación y extracción (fuentes,
+  búsquedas, candidatos con el motivo de aceptación o rechazo, servidores, tiempos y estado
+  final), sin claves ni enlaces firmados.
+- **Banco de evaluación** `scripts/evaluate.js`: compara la identificación de dos versiones del
+  código. Resultado frente a v0.2.1, en red simulada: 24/24 casos correctos (antes 17/24) y 0
+  falsos positivos (antes 3).
+- **145 pruebas automatizadas** (87 en v0.2.1): seguridad HTTP, HTML real de JKAnime archivado,
+  matriz de casos con datos reales y casos negativos.
+
+### 🟩 Compatibilidad
+
+- **Node.js 22 o superior.** Node.js 20 deja de estar soportado.
+- GitHub Actions prueba Node.js **22 y 24** (`actions/checkout@v7`, `actions/setup-node@v7`).
+- Android (Termux), Windows, Linux y macOS según la guía del README. Las pruebas reales se han
+  hecho en Android con Termux y Nuvio.
+
+### ✅ Comprobado por el desarrollador (Android + Termux + Nuvio)
+
+| Anime | Resultado |
+|---|---|
+| *Rich Girl Caretaker* T1E1, `kitsu:50761:1` | Identificado (coincidencia exacta con JKAnime), 6 enlaces, **reproducción real confirmada** en el reproductor de Nuvio |
+| *Ao Ashi* T2E1, `kitsu:49883:1` | Identificado como `ao-ashi-season-2`, episodio 1, con identificación cruzada Kitsu/AniList; 8 enlaces obtenidos (reproducción no verificada en esta prueba) |
+
+Estas comprobaciones y las pruebas automatizadas demuestran los casos comprobados, **no** que todos
+los animes ni todos los servidores funcionen.
+
+### ⚠️ Limitaciones conocidas
+
+- **Cloudflare** puede bloquear JKAnime desde VPN, proxies o servidores en la nube.
+- **HTTP 419** en el recuento de episodios: corrección aplicada sin verificar; no impide encontrar
+  episodios.
+- **Filemoon:** formato real actual sin verificar; si cambia, solo falla ese servidor.
+- **DNS rebinding:** riesgo residual descrito arriba.
+- Los enlaces de vídeo **caducan**; JKAnime y los servidores **cambian su HTML** con frecuencia.
+- Más estricto: algunos animes cuya ficha no muestra el año pueden quedar sin streams.
+
 ## 🎌 JKAnimeNuvio v0.2.1 — Mejoras de identificación y compatibilidad
 
 Actualización de **JKAnimeNuvio v0.2.0** centrada en reconocer animes cuyos títulos se escriben

@@ -74,9 +74,11 @@ test("mixdrop: MDCore.wurl from packed script", async () => {
   assert.equal(r[0].url, "https://s-delivery1.mxcontent.net/v/abc.mp4?s=1&e=2")
 })
 
-test("extractors that find only an embed page return nothing", async () => {
+test("extractors that find only an embed page return no link (PARSER_CHANGED, or NO_MEDIA when the host says so)", async () => {
   http.setFetch(async (href) => response(`<html><iframe src="https://other.example.net/embed/abc"></iframe></html>`, { url: href }))
-  assert.deepEqual(await ex.extract("https://www.yourupload.com/embed/abc", "YourUpload"), [])
+  await assert.rejects(ex.extract("https://www.yourupload.com/embed/abc", "YourUpload"), { code: "PARSER_CHANGED" })
+  http.setFetch(async (href) => response("<html><h1>File was deleted</h1></html>", { url: href }))
+  await assert.rejects(ex.extract("https://www.yourupload.com/embed/abc", "YourUpload"), { code: "NO_MEDIA" })
 })
 
 test("parseEpisodePage reads var servers and JKAnime players", () => {

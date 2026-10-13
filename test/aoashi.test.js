@@ -81,11 +81,15 @@ test("title equivalences: spacing and season markers", () => {
 })
 
 test("server failures after identification are classified, not treated as 'not found'", () => {
-  assert.equal(classifyFailure({ status: 404 }), "removed")
-  assert.equal(classifyFailure({ status: 410 }), "removed")
-  assert.equal(classifyFailure({ name: "BlockedError", status: 403 }), "blocked")
-  assert.equal(classifyFailure(new Error("Streamtape timed out after 12000 ms")), "timeout")
-  assert.equal(classifyFailure({ status: 502 }), "server-error")
+  // A 404 is reported as such: it can be a deleted video or a moved page.
+  assert.equal(classifyFailure({ status: 404 }), "HTTP_404")
+  assert.equal(classifyFailure({ status: 410 }), "HTTP_410")
+  assert.equal(classifyFailure({ status: 419 }), "HTTP_419")
+  assert.equal(classifyFailure({ name: "BlockedError", status: 403 }), "BLOCKED")
+  assert.equal(classifyFailure(new Error("Streamtape timed out after 12000 ms")), "TIMEOUT")
+  assert.equal(classifyFailure({ status: 502 }), "HTTP_5XX")
+  assert.equal(classifyFailure({ code: "PARSER_CHANGED" }), "PARSER_CHANGED")
+  assert.equal(classifyFailure(new TypeError("x is undefined")), "EXTRACTOR_ERROR")
 })
 
 test("T2E1 and T2E2 map to episodes 1 and 2 of ao-ashi-season-2 (kitsu and anilist ids)", async () => {
