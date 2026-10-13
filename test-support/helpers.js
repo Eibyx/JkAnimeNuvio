@@ -1,7 +1,8 @@
 /**
  * Offline test doubles.
  * REAL (trimmed copies of responses fetched 2026-10-13): Cinemeta, AniList
- * searches, relations.yuna.moe and api.ani.zip (test/fixtures/*.json).
+ * searches and entries, Kitsu, relations.yuna.moe and api.ani.zip
+ * (test/fixtures/*.json).
  * SYNTHETIC: TMDB and TVDB API responses (no credentials were available; the
  * shapes follow their public API docs and use the real ids/titles seen on
  * themoviedb.org/tv/285710 and thetvdb.com/series/gensou-suikoden), and the
@@ -42,6 +43,9 @@ const DEFAULT_ANIME = {
   "black-clover-jump-festa-2016-special": { title: "Black Clover: Jump Festa 2016 Special", type: "Especial", emitted: "Nov 27 de 2016", episodes: 1, status: "Concluido" },
   "mugyutto-black-clover": { title: "Mugyutto! Black Clover", type: "ONA", emitted: "Abr 2 de 2019", episodes: 8, status: "Concluido" },
   "gensou-suikoden": { title: "Gensou Suikoden", type: "Serie", emitted: "Oct 3 de 2026", episodes: 2, status: "En emisión" },
+  // JKAnime writes this show as "Ao Ashi"; Kitsu/AniList write "Aoashi".
+  "ao-ashi": { title: "Ao Ashi", type: "Serie", emitted: "Abr 9 de 2022", episodes: 24, status: "Concluido" },
+  "ao-ashi-season-2": { title: "Ao Ashi Season 2", type: "Serie", emitted: "Oct 4 de 2026", episodes: 2, status: "En emisión" },
 }
 
 const days = (start, n, step = 7) => Array.from({ length: n }, (_, i) => new Date(Date.parse(start) + i * step * 864e5).toISOString().slice(0, 10))
@@ -106,12 +110,14 @@ const TVDB = {
   },
 }
 
-const RELATIONS = require("../test/fixtures/relations.json")
+const AOASHI = require("../test/fixtures/aoashi.json")
+const RELATIONS = { ...require("../test/fixtures/relations.json"), ...Object.fromEntries(Object.entries(AOASHI).filter(([k]) => /^(yuna|anizip):/.test(k))) }
+const KITSU = Object.fromEntries(Object.entries(AOASHI).filter(([k]) => k.startsWith("kitsu:")))
 const ANILIST_SEARCHES = {
   clover: require("../test/fixtures/anilist-black-clover.json"),
   ...Object.fromEntries(Object.entries(require("../test/fixtures/anilist-suikoden-searches.json")).map(([k, v]) => [k.toLowerCase(), v])),
 }
-const ALL_MEDIA = Object.values(ANILIST_SEARCHES).flatMap((j) => j.data.Page.media)
+const ALL_MEDIA = [...Object.values(ANILIST_SEARCHES).flatMap((j) => j.data.Page.media), ...AOASHI["anilist:media"]]
 
 function searchHtml(items) {
   return `<html><body><div class="page_directorio">${items.map(([slug, a]) => `
@@ -172,8 +178,10 @@ function response(body, { status = 200, url, headers = {} } = {}) {
  */
 function installFakeNet({
   anime = DEFAULT_ANIME, servers = defaultServers, blocked = false, cinemeta, anilist, calls = [],
-  tmdb = TMDB, tvdbData = TVDB, down = [], stats = { tvdbLogins: 0, requests: [] },
+  tmdb = TMDB, tvdbData = TVDB, down = [], stats = { tvdbLogins: 0, requests: [] }, kitsu = {}, relations = {},
 } = {}) {
+  const kitsuData = { ...KITSU, ...kitsu }
+  const relationData = { ...RELATIONS, ...relations }
   const cinemetaFixtures = { "series/tt7441658": require("../test/fixtures/cinemeta-black-clover.json"), ...(cinemeta || {}) }
   http.setFetch(async (href, opts = {}) => {
     const url = new URL(href)
@@ -230,12 +238,17 @@ function installFakeNet({
     }
     if (url.hostname === "relations.yuna.moe") {
       const src = url.searchParams.get("source") === "myanimelist" ? "mal" : url.searchParams.get("source")
-      const hit = RELATIONS[`yuna:${src}:${url.searchParams.get("id")}`]
+      const hit = relationData[`yuna:${src}:${url.searchParams.get("id")}`]
       return hit ? response(hit) : response({ message: "Validation error", statusCode: 400 }, { status: 400 })
+    }
+    if (url.hostname === "kitsu.io") {
+      const m = url.pathname.match(/^\/api\/edge\/anime\/(\d+)(\/mappings)?$/)
+      const hit = m && (kitsuData[`kitsu:${m[2] ? "mappings" : "anime"}:${m[1]}`])
+      return hit ? response(hit) : response({ errors: [{ status: "404" }] }, { status: 404 })
     }
     if (url.hostname === "api.ani.zip") {
       const [[k, v]] = [...url.searchParams.entries()]
-      const hit = RELATIONS[`anizip:${k}:${v}`]
+      const hit = relationData[`anizip:${k}:${v}`]
       return hit ? response(hit) : response("Not Found", { status: 404 })
     }
     if (url.hostname === "jkanime.net") {
