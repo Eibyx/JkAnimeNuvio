@@ -87,3 +87,36 @@ test("server failures after identification are classified, not treated as 'not f
   assert.equal(classifyFailure(new Error("Streamtape timed out after 12000 ms")), "timeout")
   assert.equal(classifyFailure({ status: 502 }), "server-error")
 })
+
+test("T2E1 and T2E2 map to episodes 1 and 2 of ao-ashi-season-2 (kitsu and anilist ids)", async () => {
+  installFakeNet()
+  for (const id of ["kitsu:49883", "anilist:191788"]) {
+    assert.deepEqual(pick(await resolve("series", `${id}:1`)), { slug: "ao-ashi-season-2", episode: 1 }, id)
+    assert.deepEqual(pick(await resolve("series", `${id}:2`)), { slug: "ao-ashi-season-2", episode: 2 }, id)
+  }
+})
+
+test("HTTP: kitsu:49883:1 and :2 return season-2 streams; the 2022 entry is never fetched", async () => {
+  const { createApp } = require("../lib/app")
+  const stats = { tvdbLogins: 0, requests: [] }
+  installFakeNet({ stats })
+  const server = createApp().listen(0, "127.0.0.1")
+  await new Promise((r) => server.once("listening", r))
+  const base = `http://127.0.0.1:${server.address().port}`
+  try {
+    for (const ep of [1, 2]) {
+      const body = await (await fetch(`${base}/stream/series/kitsu:49883:${ep}.json`)).json()
+      assert.ok(body.streams.length >= 3, `episode ${ep} has streams`)
+      for (const s of body.streams) {
+        assert.ok(s.url.includes(`ao-ashi-season-2${ep}`) || s.url.includes(`ao-ashi-season-2-${ep}`), s.url)
+        assert.match(s.url, /^https:\/\/.+\.(m3u8|mp4)(\?|$)/)
+      }
+    }
+    // Episode 3 is not on JKAnime yet: empty list, not another season's episode.
+    assert.deepEqual((await (await fetch(`${base}/stream/series/kitsu:49883:3.json`)).json()).streams, [])
+  } finally {
+    server.close()
+  }
+  const jkPages = stats.requests.map((r) => new URL(r.url)).filter((u) => u.hostname === "jkanime.net").map((u) => u.pathname)
+  assert.ok(!jkPages.some((p) => /^\/ao-ashi\/\d+/.test(p)), "no episode page of the 2022 season was requested")
+})
