@@ -111,13 +111,16 @@ const TVDB = {
 }
 
 const AOASHI = require("../test/fixtures/aoashi.json")
-const RELATIONS = { ...require("../test/fixtures/relations.json"), ...Object.fromEntries(Object.entries(AOASHI).filter(([k]) => /^(yuna|anizip):/.test(k))) }
-const KITSU = Object.fromEntries(Object.entries(AOASHI).filter(([k]) => k.startsWith("kitsu:")))
+// Real Kitsu/AniList/yuna/ani.zip answers for kitsu:44629, 50761, 50827 (fetched 2026-10-13).
+const CASES = require("../test/fixtures/cases.json")
+const pick = (re) => Object.fromEntries([...Object.entries(AOASHI), ...Object.entries(CASES)].filter(([k]) => re.test(k)))
+const RELATIONS = { ...require("../test/fixtures/relations.json"), ...pick(/^(yuna|anizip):/) }
+const KITSU = pick(/^kitsu:/)
 const ANILIST_SEARCHES = {
   clover: require("../test/fixtures/anilist-black-clover.json"),
   ...Object.fromEntries(Object.entries(require("../test/fixtures/anilist-suikoden-searches.json")).map(([k, v]) => [k.toLowerCase(), v])),
 }
-const ALL_MEDIA = [...Object.values(ANILIST_SEARCHES).flatMap((j) => j.data.Page.media), ...AOASHI["anilist:media"]]
+const ALL_MEDIA = [...Object.values(ANILIST_SEARCHES).flatMap((j) => j.data.Page.media), ...AOASHI["anilist:media"], ...CASES["anilist:media"]]
 
 function searchHtml(items) {
   return `<html><body><div class="page_directorio">${items.map(([slug, a]) => `
@@ -131,7 +134,7 @@ function searchHtml(items) {
 function animeHtml(slug, a) {
   return `<html><head><meta name="csrf-token" content="tok"></head><body>
   <div class="anime__details__content"><div class="anime_pic"><img src="x.jpg"></div>
-  <div class="anime_info"><h3>${a.title}</h3><p class="scroll">Sinopsis</p></div>
+  <div class="anime_info"><h3>${a.title}</h3>${a.alt ? `<span>${a.alt}</span>` : ""}<p class="scroll">Sinopsis</p></div>
   <div class="anime_data"><ul>
     <li rel="tipo"><span>Tipo:</span> ${a.type}</li>
     <li><span>Episodios:</span> ${a.episodes}</li>
@@ -175,10 +178,11 @@ function response(body, { status = 200, url, headers = {} } = {}) {
  * @param {object} opts
  *   anime: JKAnime entries (slug -> info); search: list of slugs the search returns
  *   blocked: serve the Cloudflare challenge for every jkanime.net request
+ *   searchPage: (query) => HTML served instead of the generated search page
  */
 function installFakeNet({
   anime = DEFAULT_ANIME, servers = defaultServers, blocked = false, cinemeta, anilist, calls = [],
-  tmdb = TMDB, tvdbData = TVDB, down = [], stats = { tvdbLogins: 0, requests: [] }, kitsu = {}, relations = {},
+  tmdb = TMDB, tvdbData = TVDB, down = [], stats = { tvdbLogins: 0, requests: [] }, kitsu = {}, relations = {}, searchPage,
 } = {}) {
   const kitsuData = { ...KITSU, ...kitsu }
   const relationData = { ...RELATIONS, ...relations }
@@ -259,6 +263,7 @@ function installFakeNet({
       const parts = url.pathname.split("/").filter(Boolean)
       if (parts[0] === "buscar") {
         const q = decodeURIComponent(parts[1] || "").toLowerCase()
+        if (searchPage) return response(searchPage(q), { url: href })
         const words = q.split(/\s+/).filter((w) => w.length > 2)
         const items = Object.entries(anime).filter(([, a]) => words.every((w) => a.title.toLowerCase().includes(w)))
         return response(searchHtml(items), { url: href })
