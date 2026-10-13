@@ -7,7 +7,7 @@
 [![Versión](https://img.shields.io/badge/versi%C3%B3n-0.2.0-blue)](#actualizar)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org/en/download)
 [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-green)](LICENSE)
-[![Pruebas](https://github.com/Eibyx/JkAnimeNuvio/actions/workflows/ci.yml/badge.svg?branch=feature/jkanime-stream-only)](https://github.com/Eibyx/JkAnimeNuvio/actions/workflows/ci.yml)
+[![Pruebas](https://github.com/Eibyx/JkAnimeNuvio/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Eibyx/JkAnimeNuvio/actions/workflows/ci.yml)
 
 Addon **solo de streams** para [Nuvio](https://github.com/tapframe/NuvioStreaming) y cualquier
 cliente compatible con el protocolo de addons de [Stremio](https://www.stremio.com/).
@@ -208,13 +208,12 @@ git --version
 
 ```bash
 cd ~
-git clone -b feature/jkanime-stream-only https://github.com/Eibyx/JkAnimeNuvio.git
+git clone https://github.com/Eibyx/JkAnimeNuvio.git
 ```
 
 > [!NOTE]
-> Mientras la versión 0.2.0 esté en revisión, se instala desde la rama
-> `feature/jkanime-stream-only`. Cuando se publique en `main`, bastará con
-> `git clone https://github.com/Eibyx/JkAnimeNuvio.git`.
+> Esto descarga la rama `main`, que contiene la última versión publicada. Puedes ver todas las
+> versiones en [Releases](https://github.com/Eibyx/JkAnimeNuvio/releases).
 
 ### Paso 5 · Entrar en la carpeta
 
@@ -349,7 +348,7 @@ proyecto, configurar `.env` e iniciar. Los comandos cambian según el sistema.
 3. **Descarga el proyecto e instala las dependencias:**
    ```powershell
    cd $HOME
-   git clone -b feature/jkanime-stream-only https://github.com/Eibyx/JkAnimeNuvio.git
+   git clone https://github.com/Eibyx/JkAnimeNuvio.git
    cd JkAnimeNuvio
    npm ci --omit=dev
    ```
@@ -394,7 +393,7 @@ proyecto, configurar `.env` e iniciar. Los comandos cambian según el sistema.
 2. **Descarga el proyecto, configúralo e inícialo:**
    ```bash
    cd ~
-   git clone -b feature/jkanime-stream-only https://github.com/Eibyx/JkAnimeNuvio.git
+   git clone https://github.com/Eibyx/JkAnimeNuvio.git
    cd JkAnimeNuvio
    npm ci --omit=dev
    cp .env.example .env
@@ -417,7 +416,7 @@ proyecto, configurar `.env` e iniciar. Los comandos cambian según el sistema.
 2. **Descarga el proyecto, configúralo e inícialo:**
    ```bash
    cd ~
-   git clone -b feature/jkanime-stream-only https://github.com/Eibyx/JkAnimeNuvio.git
+   git clone https://github.com/Eibyx/JkAnimeNuvio.git
    cd JkAnimeNuvio
    npm ci --omit=dev
    cp .env.example .env
@@ -670,8 +669,8 @@ borra.
 > [!TIP]
 > - Si `git pull` dice que tienes **cambios locales**, guárdalos aparte con `git stash`, vuelve a
 >   ejecutar `git pull` y, si los necesitas, recupéralos con `git stash pop`.
-> - Cuando la versión se publique en `main`, cambia de rama una sola vez:
->   `git checkout main && git pull`.
+> - Si instalaste una versión de prueba desde la rama `feature/jkanime-stream-only`, cambia a
+>   `main` una sola vez: `git fetch origin && git checkout main && git pull`.
 
 ---
 
