@@ -23,6 +23,7 @@ from ..providers.anilist import ServerFilters
 from .canonical import CanonicalAnimeResolver, CanonicalGroup
 from .deduplication import DeduplicationEngine, DuplicateRecord
 from .filters import AnimeFilterEngine, Verdict
+from .progress import NULL_PROGRESS, Cancelled, Progress
 from .relations import compilation_parents
 
 log = logging.getLogger(__name__)
@@ -80,6 +81,16 @@ def _expression_uses(expr: Any, attr: str) -> bool:
     return bool(getattr(expr, attr, False))
 
 
+def _idents(entries: Any) -> list[tuple[str, int]]:
+    out: list[tuple[str, int]] = []
+    for e in entries:
+        if e.anilist_id:
+            out.append(("anilist", e.anilist_id))
+        if e.mal_id:
+            out.append(("mal", e.mal_id))
+    return out
+
+
 def slugify(name: str) -> str:
     s = re.sub(r"[^a-zA-Z0-9]+", "-", name).strip("-").lower()
     return s or "catalogo"
@@ -87,8 +98,9 @@ def slugify(name: str) -> str:
 
 class CatalogPipeline:
     def __init__(self, ctx: AppContext, config: CatalogConfig, *, dry_run: bool, offline: bool = False,
-                 confirm_replace: bool = False, today: date | None = None):
+                 confirm_replace: bool = False, today: date | None = None, progress: Progress | None = None):
         self.ctx = ctx
+        self.progress = progress or NULL_PROGRESS
         self.cfg = config
         self.dry_run = dry_run
         self.offline = offline
@@ -165,6 +177,8 @@ class CatalogPipeline:
 
     def fetch_seeds(self) -> dict[str, AnimeEntry]:
         f = self.cfg.filters
+        pr = self.progress
+        pr.phase("Consultando " + ("MyAnimeList (Jikan)" if self.cfg.source.primary == "myanimelist" else "AniList"), None)
         lo, hi = f.date_bounds()
         seeds: dict[str, AnimeEntry] = {}
         primary = self.cfg.source.primary
@@ -173,16 +187,22 @@ class CatalogPipeline:
                 for name in f.studios.include:
                     for e in self.ctx.anilist.iter_studio(name):
                         seeds[e.uid] = e
+                        pr.advance(1)
+                        pr.check()
                 self.report.notes.append(f"consulta por estudio(s) {f.studios.include} (sin rango de fechas)")
             else:
                 for e in self.ctx.anilist.iter_range(lo, hi, self._server_filters()):
                     seeds[e.uid] = e
+                    pr.advance(1)
+                    pr.check()
             self.report.partitions = list(self.ctx.anilist.partitions)
             self.report.stats["anilist_pages"] = self.ctx.anilist.pages_fetched
         else:
             sfw = not f.include_adult
             for e in self.ctx.jikan.iter_range(lo, hi, f.formats, sfw=sfw):
                 seeds[e.uid] = e
+                pr.advance(1)
+                pr.check()
             self.report.stats["jikan_pages"] = self.ctx.jikan.pages_fetched
         return seeds
 
@@ -226,7 +246,9 @@ class CatalogPipeline:
         if mode == TemporalMode.ENTRY_RELEASE_YEAR:
             self._prefetch_compilation_parents(list(seeds.values()))
             passing: dict[str, AnimeEntry] = {}
+            self.progress.phase("Aplicando filtros", len(seeds))
             for uid, e in seeds.items():
+                self.progress.advance(1)
                 tv = self.filters.temporal(e)
                 if not tv:
                     self._exclude(e, "temporal", tv.reasons)
@@ -240,6 +262,8 @@ class CatalogPipeline:
             if not self.cfg.canonical.enabled:
                 return [(CanonicalGroup(root=e, members={u: e}, criteria=["sin resolución canónica"],
                                         kind="movie" if e.format == "MOVIE" else "series"), [e]) for u, e in passing.items()]
+            self.ctx.index.prefetch(_idents(passing.values()))
+            self.progress.phase("Agrupando temporadas (serie canónica)", None)
             groups = canonical.resolve(passing)
             self.report.stats["extra_fetched"] = canonical.fetched_extra
             for g in groups:
@@ -256,13 +280,18 @@ class CatalogPipeline:
                 self._exclude(e, "metadata", [f"formato {e.format} no está en {sorted(formats)}"])
                 continue
             pruned[uid] = e
+        self.ctx.index.prefetch(_idents(pruned.values()))
+        self.progress.phase("Agrupando temporadas (serie canónica)", None)
         groups = canonical.resolve(pruned)
         self.report.stats["extra_fetched"] = canonical.fetched_extra
         roots = [g.root for g in groups]
         self.filters.known.update({m.uid: m for g in groups for m in g.members.values()})
         self._prefetch_compilation_parents(roots)
         passed = 0
+        self.progress.phase("Aplicando filtros", len(groups))
         for g in groups:
+            self.progress.advance(1)
+            self.progress.check()
             origin = [m for u, m in g.members.items() if u in pruned]
             if not origin:
                 continue
@@ -292,11 +321,20 @@ class CatalogPipeline:
         return selected
 
     def resolve_mappings(self, selected: list[tuple[CanonicalGroup, list[AnimeEntry]]]) -> list[ResolvedTitle]:
-        resolver = MappingResolver(self.ctx.db, self.ctx.index, self.cfg.mapping, self.ctx.tmdb)
+        resolver = MappingResolver(self.ctx.db, self.ctx.index, self.cfg.mapping, self.ctx.tmdb, cache=self.ctx.cache)
+        chunk = 400
         self.report.dataset_versions = resolver.versions
         out: list[ResolvedTitle] = []
         first_only = self.cfg.canonical.first_only
-        for g, origin in selected:
+        self.progress.phase("Resolviendo mappings (AniBridge → Kometa → Fribb)", len(selected))
+        for n, (g, origin) in enumerate(selected):
+            self.progress.advance(1, g.root.title)
+            self.progress.check()
+            if n % chunk == 0:
+                # Precarga por bloques: índice, caché persistente y TMDB concurrente; memoria acotada.
+                self.ctx.index.clear_cache()
+                block = selected[n : n + chunk]
+                resolver.prefetch(list({m.uid: m for bg, _ in block for m in [bg.root, *bg.members.values()]}.values()))
             targets = [g.root] if first_only else sorted(origin, key=lambda m: m.start_date.sort_key())
             for subject in targets:
                 is_root = subject.uid == g.root.uid
@@ -331,6 +369,9 @@ class CatalogPipeline:
                 elif rt.addable:
                     self.ctx.db.clear_review(rt.canonical_uid)
                 out.append(rt)
+        resolver.flush()
+        self.report.stats["mapping_cache_hits"] = resolver.stats["persistent_hits"]
+        self.report.stats["tmdb_prefetched"] = resolver.stats["tmdb_prefetched"]
         return out
 
     def _sort_and_limit(self, titles: list[ResolvedTitle], entries: dict[str, AnimeEntry]) -> list[ResolvedTitle]:
@@ -369,6 +410,7 @@ class CatalogPipeline:
              rep.started_at, "running"),
         )
         try:
+            self.progress.phase("Comprobando datasets de mappings", None)
             self.ensure_mappings()
             seeds = self.fetch_seeds()
             rep.stats["found"] = len(seeds)
@@ -384,9 +426,17 @@ class CatalogPipeline:
             entries.update({m.uid: m for g, _ in selected for m in g.members.values()})
             rep.titles = self._sort_and_limit(unique, entries)
             self._count_sources()
+            self.progress.pending([f"{t.title} ({t.mapping_status.value})" for t in rep.review][:200])
             self._sync()
             rep.finished_at = time.time()
             status = "interrupted" if rep.sync and rep.sync.interrupted else "ok"
+            if rep.sync and rep.sync.cancelled:
+                status = "cancelled"
+        except Cancelled:
+            rep.errors.append("cancelado por el usuario")
+            rep.finished_at = time.time()
+            self._finish("cancelled")
+            raise
         except Exception as err:
             rep.errors.append(f"{type(err).__name__}: {err}")
             rep.finished_at = time.time()
@@ -419,6 +469,7 @@ class CatalogPipeline:
         engine = SyncEngine(self.ctx.db, mcfg, self.ctx.mdblist, catalog=self.cfg.catalog.name, run_id=self.run_id)
         if self.ctx.mdblist is None and not self.dry_run:
             raise RuntimeError("Falta MDBLIST_API_KEY: no se puede escribir en MDBList (usa --dry-run para simular)")
+        self.progress.phase("Leyendo la lista de MDBList y calculando diferencias", None)
         plan = engine.plan(self.cfg.catalog.name, rep.addable, self.dry_run)
         rep.plan = plan
         rep.stats["already_in_list"] = len(plan.already_present)
@@ -431,7 +482,8 @@ class CatalogPipeline:
             raise RuntimeError(
                 f"replace eliminaría {len(plan.to_remove)} elemento(s); revisa la vista previa (--dry-run) y repite con --confirm-replace"
             )
-        res = engine.apply(plan, confirm_replace=self.confirm_replace, private=mcfg.private)
+        self.progress.phase("Sincronizando con MDBList", len(plan.to_add) + len(plan.to_remove))
+        res = engine.apply(plan, confirm_replace=self.confirm_replace, private=mcfg.private, progress=self.progress)
         engine.touch_managed(plan)
         rep.sync = res
         rep.stats["added"] = len(res.added)

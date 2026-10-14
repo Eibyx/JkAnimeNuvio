@@ -617,6 +617,43 @@ def state_import(path: Path) -> None:
         ctx.close()
 
 
+@app.command("ui", help="Inicia la interfaz web local (por defecto http://127.0.0.1:8765).")
+def ui(
+    host: Annotated[str, typer.Option("--host", help="Interfaz de red (por defecto solo este dispositivo)")] = "127.0.0.1",
+    port: Annotated[int, typer.Option("--port")] = 8765,
+    allow_remote: Annotated[bool, typer.Option("--allow-remote", help="Permitir acceso desde otros equipos (requiere ANIME_CATALOG_UI_TOKEN)")] = False,
+    open_browser: Annotated[bool, typer.Option("--open/--no-open", help="Abrir el navegador al iniciar")] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v")] = False,
+) -> None:
+    import os
+
+    try:
+        from .web.server import run as run_server
+    except ImportError as err:
+        _fail(f"Faltan dependencias de la interfaz web ({err}). Instala con: pip install -e '.[ui]'", 2)
+        return
+    settings = Settings.from_env()
+    _setup_logging(settings, verbose)
+    run_server(settings, host=host, port=port, allow_remote=allow_remote,
+               access_token=os.environ.get("ANIME_CATALOG_UI_TOKEN"), open_browser=open_browser)
+
+
+@app.command("doctor", help="Comprueba dependencias, SQLite, permisos y plataforma (útil en Termux).")
+def doctor_cmd() -> None:
+    from .platform import doctor
+
+    settings = Settings.from_env()
+    checks = doctor(settings.home or settings.database_path.parent)
+    t = Table(title="Diagnóstico")
+    t.add_column("Comprobación")
+    t.add_column("Estado")
+    t.add_column("Detalle")
+    for c in checks:
+        t.add_row(c["check"], "[green]OK[/green]" if c["ok"] else "[red]FALLO[/red]", c["detail"])
+    console.print(t)
+    raise typer.Exit(0 if all(c["ok"] for c in checks) else 1)
+
+
 @app.command("version")
 def version() -> None:
     console.print(f"anime-catalog-generator {__version__}")

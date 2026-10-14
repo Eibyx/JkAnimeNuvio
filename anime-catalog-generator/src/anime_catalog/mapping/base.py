@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import os
+import re
 import shutil
+import sqlite3
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Iterator
+from typing import Any
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -116,56 +120,76 @@ class MappingDataset(ABC):
 
     # ---- índice
     def install(self, db: Database, new_file: Path, meta: dict[str, str | None]) -> UpdateResult:
-        """Valida el archivo nuevo; si es correcto, rota el anterior a .prev y reconstruye el índice."""
+        """Valida e indexa el archivo nuevo en una sola transacción y en streaming.
+
+        Las filas se insertan por lotes a medida que se analizan (sin cargar las ~260.000 filas en
+        memoria). Si el esquema no es válido o hay menos filas de las esperadas, la transacción se
+        revierte: el índice y el archivo anteriores quedan intactos.
+        """
+        replacing = new_file != self.path
+        version = None
         try:
-            rows = list(self.parse(new_file))
+            version = self.version_of(new_file) or (meta.get("sha256") or "")[:12]
+            with db.transaction() as conn:
+                old = conn.execute("SELECT version FROM datasets WHERE source=?", (self.name,)).fetchone()
+                prev_version = old["version"] if old else None
+                conn.execute("DELETE FROM mapping_index WHERE source=?", (self.name,))
+                n = self._insert_rows(conn, self.parse(new_file))
+                if n < self.min_rows():
+                    raise DatasetError(f"solo {n} filas (< {self.min_rows()})")
+                conn.execute(
+                    """INSERT INTO datasets(source, version, etag, last_modified, sha256, path, previous_path, previous_version,
+                       downloaded_at, indexed_at, rows, status, message) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
+                       ON CONFLICT(source) DO UPDATE SET version=excluded.version, etag=excluded.etag,
+                       last_modified=excluded.last_modified, sha256=excluded.sha256, path=excluded.path,
+                       previous_path=excluded.previous_path, previous_version=excluded.previous_version,
+                       downloaded_at=excluded.downloaded_at, indexed_at=excluded.indexed_at, rows=excluded.rows,
+                       status=excluded.status, message=excluded.message""",
+                    (
+                        self.name, version, meta.get("etag"), meta.get("last_modified"), meta.get("sha256"),
+                        str(self.path), str(self.previous_path) if (replacing and self.path.exists()) or self.previous_path.exists() else None,
+                        prev_version, time.time(), time.time(), n, "ok", None,
+                    ),
+                )
         except DatasetError as err:
-            new_file.unlink(missing_ok=True)
+            if replacing:
+                new_file.unlink(missing_ok=True)
             self._set_status(db, "failed", str(err))
             return UpdateResult(self.name, "failed", message=f"esquema no válido; se conserva la versión anterior: {err}")
-        except Exception as err:  # archivo corrupto, JSON inválido, etc.
-            new_file.unlink(missing_ok=True)
+        except Exception as err:  # archivo corrupto, JSON truncado, etc.
+            if replacing:
+                new_file.unlink(missing_ok=True)
             self._set_status(db, "failed", repr(err))
             return UpdateResult(self.name, "failed", message=f"no se pudo leer el dataset; se conserva la versión anterior: {err!r}")
-        if len(rows) < self.min_rows():
-            new_file.unlink(missing_ok=True)
-            msg = f"solo {len(rows)} filas (< {self.min_rows()}); se conserva la versión anterior"
-            self._set_status(db, "failed", msg)
-            return UpdateResult(self.name, "failed", message=msg)
-        version = self.version_of(new_file) or (meta.get("sha256") or "")[:12]
-        prev_version = None
-        old = db.conn.execute("SELECT version FROM datasets WHERE source=?", (self.name,)).fetchone()
-        if old:
-            prev_version = old["version"]
-        if new_file != self.path:
+        if replacing:
+            self.dir.mkdir(parents=True, exist_ok=True)
             if self.path.exists():
                 shutil.copy2(self.path, self.previous_path)
             os.replace(new_file, self.path)
-        self._write_index(db, rows)
-        db.conn.execute(
-            """INSERT INTO datasets(source, version, etag, last_modified, sha256, path, previous_path, previous_version,
-               downloaded_at, indexed_at, rows, status, message) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
-               ON CONFLICT(source) DO UPDATE SET version=excluded.version, etag=excluded.etag,
-               last_modified=excluded.last_modified, sha256=excluded.sha256, path=excluded.path,
-               previous_path=excluded.previous_path, previous_version=excluded.previous_version,
-               downloaded_at=excluded.downloaded_at, indexed_at=excluded.indexed_at, rows=excluded.rows,
-               status=excluded.status, message=excluded.message""",
-            (
-                self.name, version, meta.get("etag"), meta.get("last_modified"), meta.get("sha256"),
-                str(self.path), str(self.previous_path) if self.previous_path.exists() else None, prev_version,
-                time.time(), time.time(), len(rows), "ok", None,
-            ),
-        )
-        return UpdateResult(self.name, "updated", version=version, rows=len(rows))
+        db.conn.execute("PRAGMA optimize")
+        return UpdateResult(self.name, "updated", version=version, rows=n)
+
+    def _insert_rows(self, conn: sqlite3.Connection, rows: Iterable[IndexRow], chunk: int = 5000) -> int:
+        sql = ("INSERT INTO mapping_index(source, src_provider, src_id, src_scope, dst_provider, dst_id, dst_scope, detail) "
+               "VALUES(?,?,?,?,?,?,?,?)")
+        name = self.name
+        batch: list[tuple] = []
+        n = 0
+        for r in rows:
+            batch.append((name, *r))
+            if len(batch) >= chunk:
+                conn.executemany(sql, batch)
+                n += len(batch)
+                batch.clear()
+        if batch:
+            conn.executemany(sql, batch)
+            n += len(batch)
+        return n
 
     def _write_index(self, db: Database, rows: Iterable[IndexRow]) -> None:
         with db.transaction() as conn:
             conn.execute("DELETE FROM mapping_index WHERE source=?", (self.name,))
-            conn.executemany(
-                "INSERT INTO mapping_index(source, src_provider, src_id, src_scope, dst_provider, dst_id, dst_scope, detail) "
-                "VALUES(?,?,?,?,?,?,?,?)",
-                ((self.name, *r) for r in rows),
-            )
+            self._insert_rows(conn, rows)
 
     def _set_status(self, db: Database, status: str, message: str) -> None:
         db.conn.execute(
@@ -202,6 +226,72 @@ class MappingDataset(ABC):
         if res.status == "updated":
             res.status = "rolled_back"
         return res
+
+
+_WS = re.compile(r"[ \t\n\r]*")
+
+
+def _read_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
+
+
+def iter_json_object(path: Path) -> Iterator[tuple[str, Any]]:
+    """Itera los pares clave/valor del objeto JSON de primer nivel SIN construir el árbol completo.
+
+    Solo se mantiene en memoria el texto del archivo y una entrada a la vez: con AniBridge (14,7 MB)
+    esto evita los ~200 MB que ocupa `json.load` y es clave en Android.
+    """
+    text = _read_text(path)
+    dec = json.JSONDecoder()
+    ws = _WS.match
+    i = ws(text, 0).end()
+    if i >= len(text) or text[i] != "{":
+        raise DatasetError("se esperaba un objeto JSON")
+    i = ws(text, i + 1).end()
+    if i < len(text) and text[i] == "}":
+        return
+    while True:
+        key, i = dec.raw_decode(text, i)
+        i = ws(text, i).end()
+        if text[i] != ":":
+            raise DatasetError(f"JSON inválido cerca de la posición {i}")
+        i = ws(text, i + 1).end()
+        value, i = dec.raw_decode(text, i)
+        yield key, value
+        i = ws(text, i).end()
+        if i >= len(text):
+            raise DatasetError("JSON truncado")
+        if text[i] == ",":
+            i = ws(text, i + 1).end()
+            continue
+        if text[i] == "}":
+            return
+        raise DatasetError(f"JSON inválido cerca de la posición {i}")
+
+
+def iter_json_array(path: Path) -> Iterator[Any]:
+    """Itera los elementos de un array JSON de primer nivel sin cargarlo entero."""
+    text = _read_text(path)
+    dec = json.JSONDecoder()
+    ws = _WS.match
+    i = ws(text, 0).end()
+    if i >= len(text) or text[i] != "[":
+        raise DatasetError("se esperaba un array JSON")
+    i = ws(text, i + 1).end()
+    if i < len(text) and text[i] == "]":
+        return
+    while True:
+        value, i = dec.raw_decode(text, i)
+        yield value
+        i = ws(text, i).end()
+        if i >= len(text):
+            raise DatasetError("JSON truncado")
+        if text[i] == ",":
+            i = ws(text, i + 1).end()
+            continue
+        if text[i] == "]":
+            return
+        raise DatasetError(f"JSON inválido cerca de la posición {i}")
 
 
 def split_ids(value: object) -> list[str]:

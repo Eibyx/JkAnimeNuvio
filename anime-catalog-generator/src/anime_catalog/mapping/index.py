@@ -19,7 +19,7 @@ DATASET_CLASSES: dict[str, type[MappingDataset]] = {
 }
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class IndexHit:
     source: str
     src_provider: str
@@ -44,9 +44,31 @@ def season_of(scope: str | None) -> int | None:
     return None
 
 
+_COLS = "source, src_provider, src_id, src_scope, dst_provider, dst_id, dst_scope, detail"
+Key = tuple[str, str]
+
+
 class MappingIndex:
-    def __init__(self, db: Database):
+    """Acceso al índice SQLite con caché en memoria acotada y precarga por lotes.
+
+    Cada (proveedor, id) se consulta una sola vez por proceso en cada dirección; `prefetch` resuelve
+    cientos de IDs con una consulta `IN (...)` en lugar de una consulta por anime.
+    """
+
+    CHUNK = 400  # por debajo del límite de variables de SQLite en Android antiguos (999)
+
+    def __init__(self, db: Database, max_cached_keys: int = 60000):
         self.db = db
+        self.max_cached_keys = max_cached_keys
+        self._fwd: dict[Key, list[IndexHit]] = {}
+        self._rev: dict[Key, list[IndexHit]] = {}
+        self._versions: dict[str, str] | None = None
+        self.queries = 0
+
+    def clear_cache(self) -> None:
+        """Libera las filas cacheadas (las versiones de datasets se conservan)."""
+        self._fwd.clear()
+        self._rev.clear()
 
     def has_data(self, source: str | None = None) -> bool:
         if source:
@@ -56,27 +78,64 @@ class MappingIndex:
         return row is not None
 
     def loaded_sources(self) -> list[str]:
-        return [r[0] for r in self.db.conn.execute("SELECT DISTINCT source FROM mapping_index")]
+        return [r[0] for r in self.db.conn.execute("SELECT source FROM datasets WHERE status='ok' AND rows > 0")]
 
     def dataset_versions(self) -> dict[str, str]:
-        return {r["source"]: r["version"] or "?" for r in self.db.conn.execute("SELECT source, version FROM datasets WHERE status='ok'")}
+        if self._versions is None:
+            self._versions = {r["source"]: r["version"] or "?" for r in
+                              self.db.conn.execute("SELECT source, version FROM datasets WHERE status='ok'")}
+        return dict(self._versions)
 
+    # ------------------------------------------------------------------ carga
+    def _store(self, cache: dict[Key, list[IndexHit]], keys: list[Key], hits: list[IndexHit], reverse: bool) -> None:
+        if len(cache) + len(keys) > self.max_cached_keys:
+            cache.clear()  # límite de memoria: se descarta todo y se vuelve a cargar bajo demanda
+        for k in keys:
+            cache[k] = []
+        for h in hits:
+            k = (h.dst_provider, h.dst_id) if reverse else (h.src_provider, h.src_id)
+            cache.setdefault(k, []).append(h)
+
+    def _load(self, keys: list[Key], reverse: bool) -> None:
+        cache = self._rev if reverse else self._fwd
+        todo = sorted({k for k in keys if k not in cache})
+        if not todo:
+            return
+        pcol, icol = ("dst_provider", "dst_id") if reverse else ("src_provider", "src_id")
+        by_provider: dict[str, list[str]] = {}
+        for p, i in todo:
+            by_provider.setdefault(p, []).append(i)
+        for provider, ids in by_provider.items():
+            for n in range(0, len(ids), self.CHUNK):
+                chunk = ids[n : n + self.CHUNK]
+                q = f"SELECT {_COLS} FROM mapping_index WHERE {pcol}=? AND {icol} IN ({','.join('?' * len(chunk))})"
+                self.queries += 1
+                rows = self.db.conn.execute(q, (provider, *chunk)).fetchall()
+                hits = [IndexHit(*r, reverse=reverse) for r in rows]
+                self._store(cache, [(provider, i) for i in chunk], hits, reverse)
+
+    def prefetch(self, keys: list[tuple[str, str | int]], reverse: bool = True) -> None:
+        """Precarga por lotes las filas directas (y opcionalmente inversas) de muchos IDs."""
+        norm = [(p, str(i)) for p, i in keys]
+        self._load(norm, reverse=False)
+        if reverse:
+            self._load(norm, reverse=True)
+
+    # ------------------------------------------------------------------ consultas
     def forward(self, provider: str, ident: str | int, sources: list[str] | None = None) -> list[IndexHit]:
-        rows = self.db.conn.execute(
-            "SELECT source, src_provider, src_id, src_scope, dst_provider, dst_id, dst_scope, detail FROM mapping_index "
-            "WHERE src_provider=? AND src_id=?",
-            (provider, str(ident)),
-        )
-        return [IndexHit(*r) for r in rows if sources is None or r[0] in sources]
+        key = (provider, str(ident))
+        if key not in self._fwd:
+            self._load([key], reverse=False)
+        hits = self._fwd.get(key, [])
+        return hits if sources is None else [h for h in hits if h.source in sources]
 
     def reverse(self, provider: str, ident: str | int, sources: list[str] | None = None) -> list[IndexHit]:
         """Filas cuyo DESTINO es provider:ident (relación en sentido contrario)."""
-        rows = self.db.conn.execute(
-            "SELECT source, src_provider, src_id, src_scope, dst_provider, dst_id, dst_scope, detail FROM mapping_index "
-            "WHERE dst_provider=? AND dst_id=?",
-            (provider, str(ident)),
-        )
-        return [IndexHit(*r, reverse=True) for r in rows if sources is None or r[0] in sources]
+        key = (provider, str(ident))
+        if key not in self._rev:
+            self._load([key], reverse=True)
+        hits = self._rev.get(key, [])
+        return hits if sources is None else [h for h in hits if h.source in sources]
 
     def anime_ids_for_show(self, tmdb_show_id: int) -> list[tuple[str, int, int | None, str]]:
         """IDs de anime (anilist/mal) asociados a una serie de TMDB: (provider, id, temporada, fuente)."""

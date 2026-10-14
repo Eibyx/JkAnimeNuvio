@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="csrf-token" content="{{CSRF_TOKEN}}">
+<meta name="theme-color" content="#6d5efc">
+<meta name="color-scheme" content="light dark">
+<title>Anime Catalog</title>
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/static/app.css?v={{VERSION}}">
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+<div class="shell">
+  <aside class="sidebar" aria-label="Navegación principal">
+    <div class="brand"><img src="/static/icon.svg" alt="" width="28" height="28"><span>Anime Catalog</span></div>
+    <nav class="nav" id="nav-side"></nav>
+    <div class="sidebar-foot"><span class="muted small">v{{VERSION}} · local</span></div>
+  </aside>
+  <div class="content">
+    <header class="topbar">
+      <button class="icon-btn only-mobile" id="btn-back" aria-label="Atrás" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <h1 id="page-title">Inicio</h1>
+      <div class="topbar-actions">
+        <span class="pill" id="jobs-indicator" hidden></span>
+        <button class="icon-btn" id="btn-theme" aria-label="Cambiar tema" title="Cambiar tema">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+        <a class="icon-btn" href="#/ajustes" aria-label="Ajustes" title="Ajustes">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        </a>
+      </div>
+    </header>
+    <main id="main" tabindex="-1">
+      <div class="loading-view" aria-busy="true"><div class="spinner" aria-hidden="true"></div><p>Cargando…</p></div>
+    </main>
+  </div>
+</div>
+<nav class="bottom-nav" id="nav-bottom" aria-label="Navegación principal"></nav>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<div class="modal-backdrop" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+<noscript><p class="noscript">Esta aplicación necesita JavaScript.</p></noscript>
+<script src="/static/app.js?v={{VERSION}}" defer></script>
+</body>
+</html>

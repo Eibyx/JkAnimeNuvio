@@ -62,8 +62,12 @@ def build_context(settings: Settings, *, transports: Transports | None = None, u
     t = transports or Transports()
     db = Database(settings.database_path)
     if settings.overrides_path and settings.overrides_path.is_file():
-        n = import_overrides(db, settings.overrides_path)
-        log.debug("Importados %d overrides desde %s", n, settings.overrides_path)
+        # Solo se reimporta si el archivo cambió (evita escrituras en cada arranque/solicitud).
+        stamp = f"{settings.overrides_path.stat().st_mtime_ns}:{settings.overrides_path.stat().st_size}"
+        if db.get_meta("overrides_stamp") != stamp:
+            n = import_overrides(db, settings.overrides_path)
+            db.set_meta("overrides_stamp", stamp)
+            log.debug("Importados %d overrides desde %s", n, settings.overrides_path)
     cache = Cache(db, enabled=use_cache)
     repo = AnimeRepository(db, use_cache=use_cache)
     anilist = AniListClient(settings.anilist_api_url, repo, cache, transport=t.anilist, timeout=settings.http_timeout, sleep=t.sleep)

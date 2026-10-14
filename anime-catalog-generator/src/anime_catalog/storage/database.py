@@ -163,6 +163,18 @@ CREATE TABLE IF NOT EXISTS sync_items (
     updated_at REAL NOT NULL,
     PRIMARY KEY (run_id, media_type, tmdb_id, action)
 );
+-- Trabajos de la interfaz web (estado recuperable tras una interrupción)
+CREATE TABLE IF NOT EXISTS jobs (
+    job_id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,
+    title TEXT,
+    status TEXT NOT NULL,
+    params TEXT,
+    snapshot TEXT,
+    list_key TEXT,
+    created_at REAL NOT NULL,
+    updated_at REAL NOT NULL
+);
 -- Elementos que esta aplicación ha añadido a cada lista (conjunto gestionado)
 CREATE TABLE IF NOT EXISTS managed_items (
     list_id INTEGER NOT NULL,
@@ -177,19 +189,31 @@ CREATE TABLE IF NOT EXISTS managed_items (
 """
 
 
+_INITIALIZED: set[str] = set()  # rutas cuyo esquema ya se creó en este proceso (arranque más rápido)
+
+
 class Database:
-    def __init__(self, path: Path | str):
+    def __init__(self, path: Path | str, check_same_thread: bool = True):
         self.path = Path(path)
         if str(path) != ":memory:":
             self.path.parent.mkdir(parents=True, exist_ok=True)
+        existed = str(path) != ":memory:" and Path(path).exists()
         # Modo autocommit: las transacciones se abren explícitamente con transaction().
-        self.conn = sqlite3.connect(str(path), timeout=60, isolation_level=None)
+        self.conn = sqlite3.connect(str(path), timeout=60, isolation_level=None, check_same_thread=check_same_thread)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.execute("PRAGMA synchronous=NORMAL")
         self.conn.execute("PRAGMA foreign_keys=ON")
-        self.conn.executescript(SCHEMA)
-        self.set_meta("schema_version", str(SCHEMA_VERSION))
+        # Ajustes moderados (también válidos en Android): caché de páginas de 8 MB y temporales en
+        # memoria. Sin mmap: sus páginas cuentan como memoria residente y en Android penalizan.
+        self.conn.execute("PRAGMA cache_size=-8000")
+        self.conn.execute("PRAGMA temp_store=MEMORY")
+        key = str(Path(path).resolve()) if str(path) != ":memory:" else None
+        if key is None or key not in _INITIALIZED or not existed:
+            self.conn.executescript(SCHEMA)
+            self.set_meta("schema_version", str(SCHEMA_VERSION))
+            if key is not None:
+                _INITIALIZED.add(key)
         self.conn.commit()
 
     def close(self) -> None:

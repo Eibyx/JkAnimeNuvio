@@ -74,6 +74,22 @@ query ($ids: [Int], $idMals: [Int], $perPage: Int) {
     % MEDIA_FIELDS
 )
 
+SEARCH_QUERY = (
+    """
+query ($search: String, $page: Int, $perPage: Int) {
+  Page(page: $page, perPage: $perPage) {
+    pageInfo { hasNextPage }
+    media(type: ANIME, search: $search, sort: SEARCH_MATCH) { %s }
+  }
+}
+"""
+    % MEDIA_FIELDS
+)
+
+META_QUERY = """
+query { GenreCollection MediaTagCollection { name category isAdult } }
+"""
+
 STUDIO_SEARCH_QUERY = """
 query ($search: String) { Page(page: 1, perPage: 10) { studios(search: $search) { id name isAnimationStudio } } }
 """
@@ -383,6 +399,27 @@ class AniListClient:
 
     def get(self, anilist_id: int) -> AnimeEntry | None:
         return self.fetch_ids([anilist_id]).get(f"anilist:{anilist_id}")
+
+    def search(self, text: str, page: int = 1, per_page: int = 20) -> tuple[list[AnimeEntry], bool]:
+        """Búsqueda por título en AniList (romaji, inglés, nativo y sinónimos)."""
+        data = self.graphql(SEARCH_QUERY, {"search": text, "page": page, "perPage": per_page})["Page"]
+        batch = [normalize_media(m) for m in data["media"] or [] if m]
+        self.repo.save(batch)
+        return batch, bool(data["pageInfo"].get("hasNextPage"))
+
+    def catalog_metadata(self) -> dict[str, Any]:
+        """Géneros y tags disponibles en AniList (caché de 30 días)."""
+        cached = self.cache.get("anilist_meta", "genres_tags")
+        if cached is not None:
+            return cached
+        data = self.graphql(META_QUERY, {})
+        out = {
+            "genres": sorted(g for g in data.get("GenreCollection") or [] if g),
+            "tags": sorted(({"name": t["name"], "category": t.get("category"), "adult": bool(t.get("isAdult"))}
+                            for t in data.get("MediaTagCollection") or [] if t.get("name")), key=lambda t: t["name"]),
+        }
+        self.cache.set("anilist_meta", "genres_tags", out, ttl=30 * 86400)
+        return out
 
     def find_studios(self, name: str) -> list[dict[str, Any]]:
         data = self.graphql(STUDIO_SEARCH_QUERY, {"search": name})

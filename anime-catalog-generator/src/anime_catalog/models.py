@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import calendar
 from datetime import date
+from dataclasses import dataclass
 from enum import StrEnum
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -167,17 +168,27 @@ class AnimeEntry(BaseModel):
         return [r for r in self.relations if r.relation_type in types and r.target_type == "ANIME"]
 
 
-class MappingCandidate(BaseModel):
-    """Un posible identificador TMDB para una entrada, con su procedencia."""
+@dataclass(slots=True)
+class MappingCandidate:
+    """Un posible identificador TMDB para una entrada, con su procedencia.
+
+    Es una dataclass ligera (no un modelo Pydantic): se crean decenas de miles por catálogo.
+    La descripción legible (`via`) se construye solo cuando se necesita.
+    """
 
     media_type: MediaType
     tmdb_id: int
-    season: int | None = None  # temporada TMDB del descriptor (solo para interpretar)
+    season: int | None  # temporada TMDB del descriptor (solo para interpretar)
     source: str  # anibridge | kometa | fribb | anime_lists | tmdb_find | title_search | override
-    via: str  # cómo se llegó: "anilist:21 -> tmdb_show:37854:s1"
+    route: str  # directo | inverso | vía anidb:N
+    hit: Any = None  # IndexHit de origen
     lineage: frozenset[str] = frozenset()
     reverse: bool = False  # obtenido mediante índice inverso
     weight: float = 1.0  # p. ej. episodios cubiertos
+
+    @property
+    def via(self) -> str:
+        return f"{self.route}: {self.hit.describe()}" if self.hit is not None else self.route
 
 
 class ExternalIds(BaseModel):

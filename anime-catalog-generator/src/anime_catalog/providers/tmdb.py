@@ -6,6 +6,7 @@ Autenticación: `api_key` (v3, parámetro de consulta) o token de lectura v4 (`A
 from __future__ import annotations
 
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Literal
 
 import httpx
@@ -74,6 +75,35 @@ class TMDBClient:
         slim = slim_details(media_type, body)
         self.cache.set("tmdb_valid", key, slim)
         return slim
+
+    def prefetch_details(self, items: list[tuple[str, int]], workers: int = 4) -> int:
+        """Descarga en paralelo (concurrencia limitada y respetando el intervalo mínimo) los detalles
+        que no están en caché. Solo la red va en hilos; la caché SQLite se escribe en el hilo actual.
+        Devuelve el número de solicitudes realizadas."""
+        todo = []
+        for mt, tid in items:
+            key = f"{mt}:{tid}"
+            if self.cache.get("tmdb_valid", key) is None and self.cache.get("tmdb_invalid", key) is None:
+                todo.append((mt, tid))
+        if not todo:
+            return 0
+
+        def fetch(item: tuple[str, int]) -> tuple[tuple[str, int], int, Any]:
+            mt, tid = item
+            try:
+                return item, *self._get(f"/{mt}/{tid}", {"append_to_response": APPEND, "language": self.language})
+            except HttpError as err:
+                return item, err.status or 0, None
+
+        with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
+            results = list(pool.map(fetch, todo))
+        for (mt, tid), status, body in results:
+            key = f"{mt}:{tid}"
+            if status == 404:
+                self.cache.set("tmdb_invalid", key, {"status": 404})
+            elif status == 200 and isinstance(body, dict):
+                self.cache.set("tmdb_valid", key, slim_details(mt, body))
+        return len(todo)
 
     def find(self, external_id: str, source: Literal["tvdb_id", "imdb_id"]) -> dict[str, list[dict[str, Any]]]:
         key = f"{source}:{external_id}"

@@ -13,6 +13,7 @@ Reglas clave:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import time
@@ -32,6 +33,7 @@ from ..models import (
     ValidationResult,
 )
 from ..providers.tmdb import TMDBClient
+from ..storage.cache import Cache
 from ..storage.database import Database
 from .index import DATASET_CLASSES, IndexHit, MappingIndex, season_of
 from .titles import best_similarity
@@ -64,9 +66,32 @@ class EntryResolution:
     tvdb_id: int | None = None
     imdb_id: str | None = None
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "uid": self.uid, "media_type": self.media_type, "tmdb_id": self.tmdb_id, "season": self.season,
+            "source": self.source, "status": self.status.value, "confidence": self.confidence, "evidence": self.evidence,
+            "conflicts": self.conflicts, "candidates": self.candidates, "external": self.external.model_dump(),
+            "validation": self.validation.model_dump(), "tvdb_id": self.tvdb_id, "imdb_id": self.imdb_id,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> EntryResolution:
+        return cls(
+            uid=d["uid"], media_type=d.get("media_type"), tmdb_id=d.get("tmdb_id"), season=d.get("season"),
+            source=d.get("source"), status=MappingStatus(d["status"]), confidence=d.get("confidence", 0.0),
+            evidence=list(d.get("evidence") or []), conflicts=list(d.get("conflicts") or []),
+            candidates=list(d.get("candidates") or []), external=ExternalIds(**(d.get("external") or {})),
+            validation=ValidationResult(**(d.get("validation") or {})), tvdb_id=d.get("tvdb_id"), imdb_id=d.get("imdb_id"),
+        )
+
+
+RESOLUTION_NS = "resolution"
+RESOLUTION_TTL_OK = 30 * 86400.0
+RESOLUTION_TTL_OTHER = 2 * 86400.0
+
 
 def _tier(c: MappingCandidate) -> int:
-    if c.via.startswith("vía anidb"):
+    if c.route.startswith("vía anidb"):
         return 2
     return 1 if c.reverse else 0
 
@@ -80,13 +105,73 @@ def _media_type(provider: str) -> MediaType | None:
 
 
 class MappingResolver:
-    def __init__(self, db: Database, index: MappingIndex, config: MappingConfig, tmdb: TMDBClient | None = None):
+    def __init__(self, db: Database, index: MappingIndex, config: MappingConfig, tmdb: TMDBClient | None = None,
+                 cache: Cache | None = None):
         self.db = db
         self.index = index
         self.config = config
         self.tmdb = tmdb
+        # La caché persistente de resoluciones solo compensa cuando evita llamadas a TMDB: sin TMDB,
+        # recalcular desde el índice local (~0,1 ms) es más barato que leer y deserializar la caché.
+        self.cache = cache if tmdb is not None else None
+        self._pending_writes: dict[float, list[tuple[str, dict[str, Any]]]] = {}
         self.versions = index.dataset_versions()
         self._entry_cache: dict[tuple[str, str, bool], EntryResolution] = {}
+        self._persisted: dict[str, dict[str, Any]] = {}
+        self._prefetched: set[str] = set()
+        self._overrides = {o["uid"]: o for o in db.list_overrides()}
+        # La huella invalida la caché persistente si cambian los datasets, la configuración o la
+        # disponibilidad de TMDB (con TMDB se valida; sin TMDB no).
+        fp = json.dumps([self.versions, config.model_dump(mode="json"), bool(tmdb)], sort_keys=True)
+        self._fingerprint = hashlib.sha256(fp.encode()).hexdigest()[:16]
+        self.stats = {"memory_hits": 0, "persistent_hits": 0, "computed": 0, "tmdb_prefetched": 0}
+
+    def flush(self) -> None:
+        """Guarda en una sola transacción las resoluciones calculadas pendientes."""
+        if self.cache is None:
+            return
+        for ttl, items in self._pending_writes.items():
+            self.cache.set_many(RESOLUTION_NS, items, ttl=ttl)
+        self._pending_writes.clear()
+
+    def refresh_overrides(self) -> None:
+        self._overrides = {o["uid"]: o for o in self.db.list_overrides()}
+        self._entry_cache.clear()
+
+    def _ckey(self, uid: str, prefer: str, check_year: bool) -> str:
+        return f"{uid}|{prefer}|{int(check_year)}|{self._fingerprint}"
+
+    # ------------------------------------------------------------------ precarga por lotes
+    def prefetch(self, entries: list[AnimeEntry], *, tmdb_workers: int = 4) -> None:
+        """Prepara la resolución de muchos animes con pocas consultas.
+
+        1. Filas del índice (directas e inversas) de todos los AniList/MAL IDs con consultas `IN`.
+        2. Filas de los AniDB IDs puente.
+        3. Resoluciones ya calculadas en ejecuciones anteriores (caché persistente).
+        4. Detalles de TMDB que harán falta para validar, descargados con concurrencia limitada.
+        """
+        keys = [k for e in entries for k in self._idents(e)]
+        self.index.prefetch(keys)
+        anidb = {h.dst_id for p, i in keys for h in self.index.forward(p, i) if h.dst_provider == "anidb"}
+        self.index.prefetch([("anidb", a) for a in anidb], reverse=False)
+        if self.cache is not None:
+            wanted = []
+            for e in entries:
+                prefer = "movie" if e.format == "MOVIE" else "tv"
+                wanted += [self._ckey(e.uid, prefer, True), self._ckey(e.uid, prefer, False)]
+            self._persisted.update(self.cache.get_many(RESOLUTION_NS, wanted))
+            self._prefetched.update(wanted)
+        if self.tmdb is not None and self.config.verify_tmdb:
+            todo: set[tuple[str, int]] = set()
+            for e in entries:
+                prefer = "movie" if e.format == "MOVIE" else "tv"
+                if self._ckey(e.uid, prefer, True) in self._persisted or e.uid in self._overrides:
+                    continue
+                cands, _, _ = self.collect(e)
+                ids = [c for c in cands if c.media_type == prefer]
+                for c in sorted(ids, key=_tier)[:3]:
+                    todo.add((c.media_type, c.tmdb_id))
+            self.stats["tmdb_prefetched"] += self.tmdb.prefetch_details(sorted(todo), workers=tmdb_workers)
 
     @property
     def dataset_sources(self) -> list[str]:
@@ -139,7 +224,7 @@ class MappingResolver:
                 cands.append(
                     MappingCandidate(
                         media_type=mt, tmdb_id=int(ident), season=season_of(scope), source=h.source,
-                        via=f"{via}: {h.describe()}", lineage=SOURCE_LINEAGE.get(h.source, frozenset()),
+                        route=via, hit=h, lineage=SOURCE_LINEAGE.get(h.source, frozenset()),
                         reverse=via == "inverso", weight=weight if "multi" not in detail else weight * 0.5,
                     )
                 )
@@ -159,19 +244,51 @@ class MappingResolver:
                 notes.append(f"kometa: la entrada AniDB agrupa varios IDs ({h.describe()})")
         return cands, ext, notes
 
+    def resolve_many(self, entries: list[AnimeEntry], chunk: int = 500, prefer: MediaType | None = None,
+                     check_year: bool = True) -> list[EntryResolution]:
+        """Resuelve muchos animes por bloques: precarga, resuelve y libera la caché del índice.
+
+        Mantiene la memoria acotada aunque el catálogo tenga miles de entradas (importante en Android).
+        """
+        out: list[EntryResolution] = []
+        for i in range(0, len(entries), chunk):
+            block = entries[i : i + chunk]
+            self.prefetch(block)
+            out += [self.resolve_entry(e, prefer, check_year) for e in block]
+            self.index.clear_cache()
+        self.flush()
+        return out
+
     # ------------------------------------------------------------------ resolución por entrada
     def resolve_entry(self, entry: AnimeEntry, prefer: MediaType | None = None, check_year: bool = True) -> EntryResolution:
         prefer = prefer or ("movie" if entry.format == "MOVIE" else "tv")
         ck = (entry.uid, prefer, check_year)
         if ck in self._entry_cache:
+            self.stats["memory_hits"] += 1
             return self._entry_cache[ck]
-        res = self._resolve_entry(entry, prefer, check_year)
+        pkey = self._ckey(entry.uid, prefer, check_year)
+        cached = None
+        if self.cache is not None and entry.uid not in self._overrides:
+            cached = self._persisted.pop(pkey, None)
+            if cached is None and pkey not in self._prefetched:
+                cached = self.cache.get(RESOLUTION_NS, pkey)
+        if cached is not None:
+            res = EntryResolution.from_dict(cached)
+            self.stats["persistent_hits"] += 1
+        else:
+            res = self._resolve_entry(entry, prefer, check_year)
+            self.stats["computed"] += 1
+            if self.cache is not None and res.source != "override":
+                ttl = RESOLUTION_TTL_OK if res.status in (MappingStatus.CONFIRMED, MappingStatus.HIGH_CONFIDENCE) else RESOLUTION_TTL_OTHER
+                self._pending_writes.setdefault(ttl, []).append((pkey, res.to_dict()))
+                if sum(len(v) for v in self._pending_writes.values()) >= 500:
+                    self.flush()
         self._entry_cache[ck] = res
         return res
 
     def _resolve_entry(self, entry: AnimeEntry, prefer: MediaType, check_year: bool) -> EntryResolution:
         res = EntryResolution(uid=entry.uid)
-        override = self.db.get_override(entry.uid)
+        override = self._overrides.get(entry.uid)
         if override:
             if override["action"] == "exclude":
                 res.status = MappingStatus.EXCLUDED

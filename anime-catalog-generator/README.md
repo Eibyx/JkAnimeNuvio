@@ -15,6 +15,14 @@ identifica la serie original, resuelve el TMDB TV/Movie ID con AniBridge → Kom
 valida en TMDB, elimina duplicados, crea la lista en MDBList si no existe, añade solo lo que falta
 y guarda reportes JSON/CSV/HTML.
 
+También tiene **interfaz gráfica** local (móvil y escritorio) que usa el mismo motor:
+
+```bash
+anime-catalog ui          # → http://127.0.0.1:8765 (Chrome en Android, cualquier navegador moderno)
+```
+
+Y funciona en **Android con Termux** (`bash install-termux.sh` y `bash start-termux.sh`).
+
 ---
 
 ## Índice
@@ -38,6 +46,10 @@ y guarda reportes JSON/CSV/HTML.
 17. [Limitaciones](#17-limitaciones)
 18. [Investigación de fuentes (fase 1)](#18-investigación-de-fuentes-fase-1)
 19. [Estado de verificación](#19-estado-de-verificación)
+20. [Interfaz gráfica](#20-interfaz-gráfica)
+21. [Termux (Android)](#21-termux-android)
+22. [Rendimiento medido](#22-rendimiento-medido)
+23. [Seguridad de la interfaz](#23-seguridad-de-la-interfaz)
 
 ---
 
@@ -84,10 +96,15 @@ anime-catalog-generator/
 │   ├── catalog/               filters.py · canonical.py · relations.py · deduplication.py · pipeline.py
 │   ├── integrations/          mdblist.py (cliente) · sync.py (diferencias y modos)
 │   ├── storage/               database.py · cache.py · repository.py · overrides.py · state.py
-│   └── reporting/reports.py
+│   ├── reporting/reports.py
+│   ├── platform.py            detección de Termux/Android y `anime-catalog doctor`
+│   └── web/                   interfaz gráfica: server.py (FastAPI) · services.py · jobs.py ·
+│                              security.py · static/ (HTML + CSS + JS sin dependencias)
 ├── filters/                   perfiles YAML listos para usar
-├── tests/                     125 pruebas offline + 2 opcionales reales
-└── scripts/build_test_fixtures.py
+├── tests/                     pruebas offline (+ opcionales reales, de rendimiento y de instalación)
+├── scripts/                   build_test_fixtures.py · benchmark_mapping.py
+├── install-termux.sh          instalador para Termux
+└── start-termux.sh            arranque de la interfaz en Termux
 ```
 
 Los workflows están en `.github/workflows/anime-catalog-*.yml` en la raíz del repositorio (GitHub
@@ -110,7 +127,11 @@ cp .env.example .env          # y rellena tus claves
 anime-catalog --help
 ```
 
-Dependencias: `httpx`, `typer`, `pydantic`, `PyYAML`, `rich` (y `pytest` para desarrollo).
+Dependencias: `httpx`, `typer`, `pydantic`, `PyYAML`, `rich`, `fastapi` y `uvicorn` (sin extras
+nativos: nada de `uvicorn[standard]`, `uvloop` ni `httptools`), y `pytest` para desarrollo. La
+interfaz no necesita Node.js ni CDN: el frontend son tres archivos estáticos (HTML, CSS, JS).
+
+En Android consulta la sección [Termux](#21-termux-android).
 
 ## 3. API key de MDBList
 
@@ -158,6 +179,8 @@ descargas son condicionales (ETag / Last-Modified): si no cambió nada, no se vu
 | `anime-catalog validate filters/*.yaml` | Valida perfiles |
 | `anime-catalog runs` | Historial de ejecuciones |
 | `anime-catalog state export/import` | Estado persistente (para Actions) |
+| `anime-catalog ui` | Interfaz gráfica local en http://127.0.0.1:8765 |
+| `anime-catalog doctor` | Diagnóstico: dependencias, SQLite, permisos, plataforma |
 
 Las escrituras en MDBList solo ocurren con **`--apply`** (o `mdblist.dry_run: false` en el YAML).
 Por defecto se simula (`DEFAULT_DRY_RUN=true`).
@@ -576,31 +599,200 @@ entorno.
 
 ## 19. Estado de verificación
 
-**Probado**
+**Probado en este entorno (Linux x86_64, Python 3.13)**
 
-- `pytest`: 125 pruebas offline (canónica con datos reales de One Piece, AoT, JJK, Demon Slayer,
-  HxH; mappings directos, MAL, vía AniDB, vía TVDB→TMDB, inversos, ausentes, ambiguos, conflictos,
-  varias temporadas, varias películas; filtros; MDBList: crear, existente, nombres duplicados,
-  append, sync, replace, dry-run, 401, 429, cuota diaria, respuesta parcial, interrupción y
-  reanudación sin duplicados; datasets: ETag, cambio de esquema, descarga truncada, rollback,
-  overrides persistentes).
-- En vivo (solo lectura): descarga e indexado de AniBridge/Kometa/Fribb; `mapping --anilist-id 21`;
-  `create --config filters/anime-2020s.yaml --dry-run` (387 → 159 series, 157 IDs válidos, 0
-  duplicados); películas 2019-2021 (68 TMDB Movie IDs, 0 series); MAPPA por estudio (118 → 38 series);
-  primavera 2025.
-- Script de guardado de estado del workflow simulado con un repositorio Git local.
+- `pytest`: **166 pruebas** (las 125 originales se conservan). Por defecto se ejecutan 162 y pasan
+  todas; 4 son opcionales: la instalación completa simulada y el benchmark con datasets reales se
+  ejecutaron y pasaron; la prueba en vivo de AniList/AniBridge pasó; la de MDBList en vivo se
+  omitió por no haber clave.
+  - Motor: canónica con datos reales (One Piece, AoT, JJK, Demon Slayer, HxH), mappings directos,
+    MAL, vía AniDB, vía TVDB→TMDB, inversos, ausentes, ambiguos, conflictos; filtros; MDBList
+    (crear, existente, duplicados, append, sync, replace, dry-run, 401, 429, cuota diaria,
+    respuesta parcial, interrupción y reanudación); datasets (ETag, esquema, truncado, rollback).
+  - Interfaz/API (`test_web.py`): página y estáticos sin recursos externos, CSP, Host, Origin,
+    CSRF, acceso remoto con token, claves nunca devueltas y `.env` con permisos 600, validación y
+    expresión AND/OR/NOT, perfiles, trabajo con progreso por SSE (sin porcentaje inventado),
+    resultados paginados, confirmación obligatoria para escribir, sincronización visual sin
+    duplicados, elementos no agregados, historial, cancelación (API, gestor y entre lotes de
+    MDBList) con reanudación, bloqueo por lista, recuperación tras reinicio, explorador por
+    nombre/AniList/MAL/AniDB/TMDB/TVDB/IMDb, detalle con serie canónica y correcciones.
+  - Rendimiento (`test_performance.py`) y Termux (`test_termux.py`), ver secciones 21 y 22.
+- En vivo (solo lectura): AniList, descarga e indexado de AniBridge/Kometa/Fribb; catálogos
+  2020-2026, películas, MAPPA y primavera 2025 por CLI y por la interfaz.
+- Interfaz en Chromium (Playwright) a 393×851 (móvil) y 1366×900 (escritorio), claro y oscuro: flujo
+  completo inicio → crear → simular (AniList real) → progreso → resultados → explorador → detalle,
+  **0 errores de consola**; flujo de escritura contra un MDBList **simulado**: crear lista con
+  confirmación, agregar animes a una lista existente, simular, confirmar (el botón queda
+  deshabilitado hasta marcar la casilla) y sincronizar 1.159 títulos, ver contenido e historial.
+- Instalador de Termux ejecutado de principio a fin en Linux con `pkg` simulado y `$PREFIX` falso
+  (entorno virtual, instalación, comando, `.env` 600, `doctor` y prueba HTTP de la interfaz).
 
-**Pendiente de verificar con tus credenciales**
+**Pendiente de verificar**
 
-- Pruebas E–H (escritura real en MDBList y ejecución en GitHub Actions con Secrets).
-- Validación TMDB real (requiere `TMDB_API_KEY`).
-- Jikan real (fuente `myanimelist`/`hybrid`).
+- **En un dispositivo Android real con Termux**: instalación de paquetes con `pkg`, compilación
+  de `pydantic-core` si no hay paquete precompilado, `termux-wake-lock`, y memoria/CPU/batería
+  reales (las cifras de la sección 22 son de un PC x86_64).
+- Con tus credenciales: escritura real en MDBList (pruebas E–H), validación real en TMDB y
+  GitHub Actions con Secrets.
+- Jikan real (fuente `myanimelist`/`hybrid`): no fue accesible desde el entorno de desarrollo.
 
-Pruebas opcionales en vivo (no escriben en MDBList):
+Pruebas opcionales:
 
 ```bash
-ANIME_CATALOG_LIVE_TESTS=1 pytest -m live
+ANIME_CATALOG_LIVE_TESTS=1 pytest -m live        # APIs reales, solo lectura
+ANIME_CATALOG_SLOW=1 pytest tests/test_termux.py # instalación completa simulada
+ANIME_CATALOG_BENCHMARK=1 pytest -m benchmark    # benchmark con datasets reales
 ```
+
+## 20. Interfaz gráfica
+
+```bash
+anime-catalog ui                  # http://127.0.0.1:8765
+anime-catalog ui --port 9000 --open
+```
+
+Aplicación web local, mobile-first (navegación inferior en el móvil, barra lateral en escritorio),
+tema claro/oscuro automático o manual, en español. Está conectada al mismo motor que el CLI: no
+hay una segunda lógica de filtros ni de mappings.
+
+| Sección | Qué permite |
+| --- | --- |
+| **Inicio** | Catálogos, animes identificados, series y películas, mappings resueltos y pendientes, duplicados eliminados, última sincronización, estado de los datasets, últimas ejecuciones, trabajos en curso y acceso rápido a crear |
+| **Crear** | Formulario completo: fuente (AniList, MyAnimeList, híbrido); años, décadas, años sueltos, fechas exactas y temporadas; agrupar temporadas (activado) con estreno original / cualquier temporada / entrada individual; Average/Mean Score y MAL con escala porcentual; géneros y tags con búsqueda, inclusión/exclusión (NOT) y AND/OR, relevancia del tag; estudios con búsqueda dinámica, principal o participante; formatos; popularidad, episodios, duración, estado, país, fuente de adaptación, adulto, secuelas, spin-offs, remakes…; expresión avanzada AND/OR/NOT en YAML; lista de destino y modo; guardar/cargar/importar/ver perfiles YAML. Botones **Simular** y **Sincronizar con MDBList** |
+| **Trabajos** | Progreso en tiempo real por Server-Sent Events: fase, procesados, total (solo si se conoce), porcentaje (solo con total), velocidad, tiempo, errores, títulos pendientes y registro; cancelar; reintentar; resultados paginados con búsqueda (títulos, revisión, excluidos, duplicados); sincronizar desde una simulación |
+| **Explorador** | Mapping Explorer por nombre, AniList, MAL, AniDB, TMDB, TVDB o IMDb: título, año, tipo, serie canónica y miembros, identificadores, fuente, confianza, validación, conflictos, candidatos por fuente; cola de revisión y correcciones manuales |
+| **Listas** | Mis listas de MDBList, crear lista (con confirmación), ver contenido paginado (distingue lo añadido por la app de lo manual), agregar animes a una lista, historial con elementos no agregados |
+| **Ajustes** | Claves de API (se guardan en el backend, nunca se muestran), actualizar datasets, tema, información del sistema |
+
+Comportamiento:
+
+- Toda escritura en MDBList exige **confirmación explícita** en un diálogo; el modo reemplazar
+  exige una segunda confirmación con vista previa de las eliminaciones. Nunca hay borrados
+  automáticos no autorizados (mismas reglas que el CLI).
+- Los trabajos corren en hilos aparte: la interfaz sigue respondiendo mientras se procesa un
+  catálogo. No se permiten dos sincronizaciones simultáneas sobre la misma lista (HTTP 409).
+- Cancelar detiene el trabajo en un punto seguro (entre páginas, grupos o lotes), nunca a mitad de
+  una escritura. Si el servidor se detiene, el trabajo queda «interrumpido» y se puede reintentar
+  sin duplicados (cada ejecución recalcula las diferencias con la lista real).
+- Las tablas están paginadas en el servidor (25 filas): el navegador nunca recibe miles de filas.
+- El borrador del formulario se guarda en el navegador para no perderlo al recargar.
+
+## 21. Termux (Android)
+
+Requisitos: Termux actualizado (se recomienda la versión de F-Droid o GitHub), ≈300 MB libres para
+la app y los datos, y ≈1,5 GB adicionales solo si hay que compilar `pydantic-core` con Rust. No
+necesita root, Docker ni Node.js.
+
+```bash
+pkg install git
+git clone https://github.com/eibyx/jkanimenuvio.git
+cd jkanimenuvio/anime-catalog-generator
+bash install-termux.sh          # o: bash install-termux.sh --dry-run para ver los pasos
+bash start-termux.sh            # muestra http://127.0.0.1:8765 → ábrela en Chrome
+```
+
+Qué hace el instalador (`install-termux.sh`):
+
+1. Detecta Termux (se niega a ejecutarse en otro sistema salvo `--force`).
+2. Instala con `pkg`: `python clang make sqlite openssl libffi` y, si existen, `python-pip
+   pkg-config libyaml binutils`.
+3. Comprueba Python ≥ 3.12 y SQLite ≥ 3.24.
+4. Crea un entorno virtual privado en `~/.anime-catalog/venv` (con `--system-site-packages`
+   para reutilizar paquetes de Termux). No actualiza `pip` con `pip` (en Termux lo gestiona `pkg`).
+5. **pydantic-core** (la única dependencia con código nativo, en Rust): los wheels `manylinux` de
+   PyPI **no sirven** en Termux (usa bionic, no glibc). El instalador prueba primero
+   `pkg install python-pydantic-core`; si no está disponible, instala `rust` y lo compila con
+   `ANDROID_API_LEVEL=$(getprop ro.build.version.sdk)` (lo exige maturin) y `CARGO_BUILD_JOBS=2`
+   para no agotar la memoria. La primera compilación puede tardar 10-30 minutos.
+6. Instala la aplicación sin extras nativos (PyYAML usa `libyaml` si está; si no, su versión
+   en Python puro).
+7. Prepara `~/.anime-catalog` (datos, perfiles, reportes y `.env` con permisos 600) dentro del
+   almacenamiento **privado** de Termux: no hace falta `termux-setup-storage` ni permisos de
+   almacenamiento.
+8. Crea el comando `anime-catalog` en `$PREFIX/bin` y verifica con `anime-catalog doctor` y una
+   petición HTTP a la interfaz.
+
+Todos los comandos del CLI siguen disponibles en Termux (`anime-catalog create …`, `mapping`,
+`review`, etc.).
+
+**Segundo plano en Android.** Android suspende o mata procesos en segundo plano para ahorrar
+batería:
+
+- `start-termux.sh` pide `termux-wake-lock` (la CPU no se duerme mientras corre) y lo libera al
+  salir. Mantén la notificación de Termux activa.
+- Desactiva la optimización de batería para Termux (Ajustes → Apps → Termux → Batería → Sin
+  restricciones), sobre todo en Xiaomi/Huawei/Samsung.
+- Android 12+ tiene el «phantom process killer», que limita los procesos hijos. La aplicación es un
+  único proceso de Python con hilos, pero si el sistema la cierra, los trabajos aparecen como
+  «interrumpidos» y se pueden reintentar sin duplicados.
+- Si cambias de app durante mucho tiempo, Chrome puede descargar la pestaña: al volver se
+  reconecta sola al progreso (SSE).
+
+Consejos para el móvil: deja que los datasets se descarguen una vez (`anime-catalog mappings
+update`, ≈25 MB); prefiere rangos de años concretos; un catálogo de 7 años tarda sobre todo por
+el límite de AniList (30-90 peticiones/min), no por el mapping local.
+
+## 22. Rendimiento medido
+
+Mediciones reales con `scripts/benchmark_mapping.py` y los datasets publicados el 2026-10-14
+(AniBridge 259.756 filas, Kometa 108.703, Fribb 165.297). **Máquina: contenedor Linux x86_64,
+Python 3.13 — no es un móvil**; en Android cabe esperar tiempos varias veces mayores. Cada fase
+se mide en un proceso aparte (memoria máxima = `ru_maxrss` del proceso).
+
+| Medida | Antes de optimizar | Después |
+| --- | --- | --- |
+| Descarga inicial (3 datasets, 24 MB) | — | 1,2 s (0,86 + 0,26 + 0,10) |
+| Indexación (validación + SQLite) | 3,89 s · **211 MB** | 2,87 s · **62 MB** |
+| Consulta individual (One Piece, en frío) | 1,54 ms | 1,51 ms |
+| Consulta individual media (200 al azar, sin caché) | 0,12 ms | 0,14 ms |
+| Resolver 100 animes | 0,012 s · 46 MB | 0,010 s · 49 MB |
+| Resolver 1.000 animes | 0,114 s · 54 MB | 0,106 s · 66 MB |
+| Resolver 5.000 animes | 0,587 s · 91 MB | 0,534 s · 104 MB |
+| 5.000 animes, misma ejecución (caché en memoria) | 0,003 s | 0,004 s |
+| Arranque del CLI (`--help`) | — | 0,31 s |
+| `/api/dashboard` · búsqueda por TMDB ID | ≈100 ms · ≈90 ms | **8,7 ms · 4,3 ms** |
+| Servidor web en reposo tras varios trabajos | — | ≈111 MB RSS |
+
+Qué se optimizó y qué se comprobó:
+
+- **Indexación en streaming**: el JSON se recorre entrada a entrada (`raw_decode`) y se inserta
+  por lotes en una sola transacción, en lugar de `json.load` + lista de filas. Es la mejora
+  principal para Android (−70 % de memoria). Una versión nueva y válida reemplaza la anterior;
+  si no es válida, la transacción se revierte.
+- **No se reprocesa nada si no cambia**: descarga condicional por ETag/Last-Modified y
+  comparación SHA-256; un dataset sin cambios no se vuelve a indexar (prueba: < 1 s).
+- **Consultas por lotes**: `prefetch` carga con consultas `IN (...)` las filas de cientos de IDs;
+  para 5.000 animes, menos de 120 consultas en lugar de varias por anime (prueba automática).
+  Resultado honesto: en SQLite local cada consulta indexada ya cuesta microsegundos, así que el
+  tiempo apenas cambia; el beneficio es menos consultas y memoria acotada (bloques de 500).
+- **Caché persistente de resoluciones**: solo se usa **cuando hay TMDB**, porque ahí evita llamadas
+  de red (prueba: la segunda ejecución hace 0 peticiones a TMDB). Sin TMDB, recalcular desde el
+  índice (~0,1 ms) es más barato que leer la caché, y se midió que activarla empeoraba el tiempo.
+- **TMDB concurrente y controlado**: prefetch con 4 hilos, intervalo mínimo compartido y caché
+  (prueba con 50 ms de latencia simulada: más de 1,6× más rápido que en serie).
+- **Conexiones y TLS reutilizados**: un único contexto SSL por proceso; antes cada cliente HTTP
+  recargaba el almacén de certificados (≈15 ms, ×2), y eso era casi todo el tiempo de la API.
+- SQLite: WAL, caché de páginas de 8 MB, temporales en memoria. Se probó `mmap` y se descartó
+  (inflaba la memoria residente, lo que perjudica en Android).
+- Clases con `__slots__` y candidatos sin Pydantic (decenas de miles por catálogo).
+
+Reproducir: `python scripts/benchmark_mapping.py --work /tmp/bench --download --json bench.json`.
+
+## 23. Seguridad de la interfaz
+
+- Escucha solo en **127.0.0.1** por defecto. `--host` distinto exige `--allow-remote` **y** un token
+  (`ANIME_CATALOG_UI_TOKEN`) que se pide en todas las rutas (cabecera `Authorization: Bearer`, o
+  `?token=` la primera vez, que deja una cookie `HttpOnly; SameSite=Strict`).
+- Solo se aceptan cabeceras `Host` de loopback (protección frente a DNS rebinding) y, si llega
+  `Origin`, debe ser la del propio servidor.
+- Toda operación de escritura exige un token **anti-CSRF** aleatorio por arranque, incrustado en la
+  página: otra web abierta en el móvil no puede leerlo ni forjar peticiones.
+- CSP estricta sin recursos externos (`default-src 'self'`), sin iframes (`frame-ancestors
+  'none'`), `nosniff`, `no-referrer`.
+- Las claves de MDBList/TMDB **nunca** se envían al navegador: la API solo indica si están
+  configuradas. Desde Ajustes se guardan en `~/.anime-catalog/.env` con permisos `600`, dentro del
+  almacenamiento privado de Termux (otras apps no pueden leerlo sin root). Los registros ocultan
+  `apikey=…` y los valores de las claves.
 
 ## Licencia
 

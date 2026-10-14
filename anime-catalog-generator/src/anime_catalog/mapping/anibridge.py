@@ -8,12 +8,11 @@ el índice por destino, marcando el resultado como inverso.
 
 from __future__ import annotations
 
-import json
 import re
 from collections.abc import Iterator
 from pathlib import Path
 
-from .base import DatasetError, IndexRow, MappingDataset
+from .base import DatasetError, IndexRow, MappingDataset, iter_json_object
 
 DESCRIPTOR = re.compile(r"^(\w+):(\w+)(?::(\w+))?$")
 KNOWN_PROVIDERS = {"anidb", "anilist", "mal", "imdb_movie", "imdb_show", "tmdb_show", "tmdb_movie", "tvdb_show", "tvdb_movie"}
@@ -72,18 +71,18 @@ class AniBridgeDataset(MappingDataset):
         return 50000
 
     def parse(self, path: Path) -> Iterator[IndexRow]:
-        with path.open("r", encoding="utf-8") as fh:
-            data = json.load(fh)
-        if not isinstance(data, dict):
-            raise DatasetError("AniBridge: la raíz debe ser un objeto")
-        meta = data.get("$meta") or {}
-        version = str(meta.get("schema_version") or "")
-        if not version.startswith(SUPPORTED_MAJOR + "."):
-            raise DatasetError(f"AniBridge: schema_version {version!r} no soportado (se espera {SUPPORTED_MAJOR}.x)")
         bad = 0
-        for src, targets in data.items():
+        meta_ok = False
+        for src, targets in iter_json_object(path):
             if src.startswith("$"):
+                if src == "$meta":
+                    version = str((targets or {}).get("schema_version") or "")
+                    if not version.startswith(SUPPORTED_MAJOR + "."):
+                        raise DatasetError(f"AniBridge: schema_version {version!r} no soportado (se espera {SUPPORTED_MAJOR}.x)")
+                    meta_ok = True
                 continue
+            if not meta_ok:
+                raise DatasetError("AniBridge: falta $meta.schema_version al inicio del archivo")
             try:
                 sp, sid, sscope = parse_descriptor(src)
             except DatasetError:
@@ -107,5 +106,7 @@ class AniBridgeDataset(MappingDataset):
                     continue
                 detail = f"eps={count_episodes(ranges)};{summarize_ranges(ranges)}"
                 yield (sp, sid, sscope, dp, did, dscope, detail)
-        if bad > 1000:
-            raise DatasetError(f"AniBridge: {bad} descriptores no reconocidos; ¿cambió el esquema?")
+            if bad > 1000:
+                raise DatasetError(f"AniBridge: {bad} descriptores no reconocidos; ¿cambió el esquema?")
+        if not meta_ok:
+            raise DatasetError("AniBridge: falta $meta.schema_version")

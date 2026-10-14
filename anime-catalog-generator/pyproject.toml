@@ -15,9 +15,13 @@ dependencies = [
   "pydantic>=2.6,<3",
   "PyYAML>=6.0",
   "rich>=13.7",
+  "fastapi>=0.110",
+  "uvicorn>=0.29",
 ]
 
 [project.optional-dependencies]
+# Sin extras nativos (uvicorn[standard] trae uvloop/httptools, que no compilan bien en Android).
+ui = []
 dev = ["pytest>=8"]
 
 [project.scripts]
@@ -26,8 +30,12 @@ anime-catalog = "anime_catalog.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"anime_catalog.web" = ["static/*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [
+  "benchmark: mediciones de rendimiento con datasets reales (ANIME_CATALOG_BENCHMARK=1)",
   "live: pruebas opcionales de solo lectura contra APIs reales (ANIME_CATALOG_LIVE_TESTS=1)",
 ]

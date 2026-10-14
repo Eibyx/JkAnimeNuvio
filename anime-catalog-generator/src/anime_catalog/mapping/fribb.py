@@ -10,11 +10,10 @@ consumen en tiempo de ejecución y no se redistribuyen.
 
 from __future__ import annotations
 
-import json
 from collections.abc import Iterator
 from pathlib import Path
 
-from .base import DatasetError, IndexRow, MappingDataset
+from .base import DatasetError, IndexRow, MappingDataset, iter_json_array
 
 
 class FribbDataset(MappingDataset):
@@ -27,12 +26,10 @@ class FribbDataset(MappingDataset):
     base_confidence = 0.88
 
     def parse(self, path: Path) -> Iterator[IndexRow]:
-        with path.open("r", encoding="utf-8") as fh:
-            data = json.load(fh)
-        if not isinstance(data, list):
-            raise DatasetError("Fribb: se esperaba una lista de entradas")
         malformed = 0
-        for rec in data:
+        total = 0
+        for rec in iter_json_array(path):
+            total += 1
             if not isinstance(rec, dict):
                 malformed += 1
                 continue
@@ -69,5 +66,5 @@ class FribbDataset(MappingDataset):
                 for op, oid in sources:
                     if op != sp:
                         yield (sp, sid, None, op, oid, None, detail)
-        if malformed > len(data) * 0.05:
+        if malformed > max(50, total * 0.05):
             raise DatasetError(f"Fribb: {malformed} entradas mal formadas; ¿cambió el esquema?")

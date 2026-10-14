@@ -8,11 +8,10 @@ separados por comas ("849,4382"); por eso se construyen índices secundarios por
 
 from __future__ import annotations
 
-import json
 from collections.abc import Iterator
 from pathlib import Path
 
-from .base import DatasetError, IndexRow, MappingDataset, split_ids
+from .base import DatasetError, IndexRow, MappingDataset, iter_json_object, split_ids
 
 KNOWN_FIELDS = {"tvdb_id", "tvdb_season", "tvdb_epoffset", "mal_id", "anilist_id", "imdb_id", "tmdb_movie_id", "tmdb_show_id"}
 
@@ -35,12 +34,10 @@ class KometaDataset(MappingDataset):
     base_confidence = 0.88
 
     def parse(self, path: Path) -> Iterator[IndexRow]:
-        with path.open("r", encoding="utf-8") as fh:
-            data = json.load(fh)
-        if not isinstance(data, dict):
-            raise DatasetError("Kometa: se esperaba un objeto indexado por AniDB ID")
         unknown = 0
-        for anidb, rec in data.items():
+        total = 0
+        for anidb, rec in iter_json_object(path):
+            total += 1
             if not str(anidb).isdigit() or not isinstance(rec, dict):
                 unknown += 1
                 continue
@@ -68,5 +65,5 @@ class KometaDataset(MappingDataset):
                 for op, oid in sources:
                     if (op, oid) != (sp, sid) and op != sp:
                         yield (sp, sid, None, op, oid, None, detail)
-        if unknown > len(data) * 0.05:
+        if unknown > max(50, total * 0.05):
             raise DatasetError(f"Kometa: {unknown} entradas con formato desconocido; ¿cambió el esquema?")

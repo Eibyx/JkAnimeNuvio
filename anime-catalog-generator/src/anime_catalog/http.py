@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import logging
+import functools
 import random
 import re
+import ssl
+import threading
 import time
 from collections.abc import Callable
 from typing import Any
@@ -48,16 +51,20 @@ class RateLimiter:
         self._last = 0.0
         self._until = 0.0
         self._sleep = sleep
+        self._lock = threading.Lock()  # seguro con varios hilos (prefetch concurrente de TMDB)
 
     def wait(self) -> None:
-        now = time.monotonic()
-        target = max(self._last + self.min_interval, self._until)
+        with self._lock:
+            now = time.monotonic()
+            target = max(self._last + self.min_interval, self._until)
+            # Se reserva el turno antes de dormir para que los demás hilos esperen después.
+            self._last = max(now, target)
         if target > now:
             self._sleep(target - now)
-        self._last = time.monotonic()
 
     def pause_for(self, seconds: float) -> None:
-        self._until = max(self._until, time.monotonic() + max(0.0, seconds))
+        with self._lock:
+            self._until = max(self._until, time.monotonic() + max(0.0, seconds))
 
 
 def parse_retry_after(value: str | None) -> float | None:
@@ -74,6 +81,16 @@ def parse_retry_after(value: str | None) -> float | None:
         return max(0.0, dt.timestamp() - time.time())
     except (TypeError, ValueError):
         return None
+
+
+@functools.lru_cache(maxsize=1)
+def shared_ssl_context() -> ssl.SSLContext:
+    """Contexto TLS único por proceso.
+
+    Cargar el almacén de certificados cuesta ~15 ms por cliente (más en Android); la interfaz web crea
+    clientes por solicitud, así que se reutiliza el mismo contexto (respeta SSL_CERT_FILE/SSL_CERT_DIR).
+    """
+    return httpx.create_ssl_context(trust_env=True)
 
 
 class HttpClient:
@@ -101,6 +118,7 @@ class HttpClient:
             headers={"User-Agent": USER_AGENT, "Accept": "application/json", **(headers or {})},
             transport=transport,
             follow_redirects=True,
+            verify=shared_ssl_context(),
         )
         self.limiter = RateLimiter(min_interval, sleep=sleep)
         self.max_retries = max_retries

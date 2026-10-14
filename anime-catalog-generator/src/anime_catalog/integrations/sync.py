@@ -23,6 +23,7 @@ from typing import Any
 from ..config import MDBListConfig, SyncMode
 from ..models import ResolvedTitle
 from ..storage.database import Database
+from ..catalog.progress import NULL_PROGRESS, Cancelled, Progress
 from .mdblist import Identity, MDBListClient, MDBListError
 
 log = logging.getLogger(__name__)
@@ -61,6 +62,7 @@ class SyncResult:
     failed: list[Identity] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     interrupted: bool = False
+    cancelled: bool = False
 
 
 class SyncEngine:
@@ -142,7 +144,9 @@ class SyncEngine:
         return {(r[0], int(r[1])) for r in rows}
 
     # ------------------------------------------------------------------ aplicar
-    def apply(self, plan: SyncPlan, *, confirm_replace: bool = False, private: bool = False) -> SyncResult:
+    def apply(self, plan: SyncPlan, *, confirm_replace: bool = False, private: bool = False,
+              progress: Progress | None = None) -> SyncResult:
+        pr = progress or NULL_PROGRESS
         if self.client is None:
             raise SyncError("Se necesita MDBLIST_API_KEY para escribir en MDBList")
         if plan.mode == SyncMode.REPLACE and plan.to_remove and not confirm_replace:
@@ -162,6 +166,7 @@ class SyncEngine:
         self._journal(list_id, "remove", plan.to_remove)
         try:
             for batch in self._batches(plan.to_remove):
+                pr.check()  # punto seguro: nunca a mitad de un lote
                 r = self.client.modify(list_id, "remove", batch)
                 res.removed += batch
                 self._mark(batch, "remove", "done")
@@ -170,7 +175,9 @@ class SyncEngine:
                     [(list_id, m, t) for m, t in batch],
                 )
                 log.info("MDBList: eliminados %d (respuesta %s)", len(batch), {k: v for k, v in r.items() if k != "raw"})
+                pr.advance(len(batch))
             for batch in self._batches(plan.to_add):
+                pr.check()
                 r = self.client.modify(list_id, "add", batch)
                 not_found = set(r.get("not_found_ids") or [])
                 if r.get("not_found") and not not_found:
@@ -190,15 +197,25 @@ class SyncEngine:
                     res.errors.append(f"respuesta parcial: {total} de {len(batch)} elementos reconocidos en un lote")
                 log.info("MDBList: lote de %d enviado (añadidos %s, existentes %s, no encontrados %s)",
                          len(batch), r.get("added"), r.get("existing"), r.get("not_found"))
+                pr.advance(len(batch))
+                for nf in sorted(not_found):
+                    pr.error(f"MDBList no encontró {nf[0]}:{nf[1]}")
+        except Cancelled:
+            res.interrupted = res.cancelled = True
+            res.errors.append("cancelado por el usuario entre lotes; lo pendiente se añadirá en la próxima ejecución")
+            res.failed = self._pending()
         except MDBListError as err:
             res.interrupted = True
             res.errors.append(str(err))
-            pending = self.db.conn.execute(
-                "SELECT media_type, tmdb_id FROM sync_items WHERE run_id=? AND status='pending'", (self.run_id,)
-            ).fetchall()
-            res.failed = [(r[0], int(r[1])) for r in pending]
+            res.failed = self._pending()
             log.error("Sincronización interrumpida: %s. Pendientes: %d (se reanudarán sin duplicados en la próxima ejecución)", err, len(res.failed))
         return res
+
+    def _pending(self) -> list[Identity]:
+        rows = self.db.conn.execute(
+            "SELECT media_type, tmdb_id FROM sync_items WHERE run_id=? AND status='pending'", (self.run_id,)
+        ).fetchall()
+        return [(r[0], int(r[1])) for r in rows]
 
     def _batches(self, items: list[Identity]) -> list[list[Identity]]:
         size = self.config.batch_size

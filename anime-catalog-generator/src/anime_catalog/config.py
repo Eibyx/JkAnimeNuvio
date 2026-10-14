@@ -37,6 +37,49 @@ def load_dotenv(path: Path) -> None:
             os.environ[key] = value
 
 
+SECRET_ENV_KEYS = ("MDBLIST_API_KEY", "TMDB_API_KEY", "TMDB_READ_ACCESS_TOKEN", "TVDB_API_KEY", "TVDB_SUBSCRIBER_PIN")
+
+
+def save_secrets(env_file: Path, values: dict[str, str | None]) -> None:
+    """Guarda/actualiza claves en un .env con permisos 600 (solo el usuario). Valor vacío = borrar.
+
+    En Termux el directorio de la app es privado: ninguna otra app puede leerlo sin root.
+    """
+    unknown = set(values) - set(SECRET_ENV_KEYS)
+    if unknown:
+        raise ValueError(f"claves no admitidas: {sorted(unknown)}")
+    lines: list[str] = []
+    seen: set[str] = set()
+    if env_file.is_file():
+        for raw in env_file.read_text(encoding="utf-8").splitlines():
+            key = raw.split("=", 1)[0].strip() if "=" in raw and not raw.lstrip().startswith("#") else None
+            if key in values:
+                seen.add(key)
+                v = (values[key] or "").strip()
+                if v:
+                    lines.append(f"{key}={v}")
+                continue
+            lines.append(raw)
+    for k, v in values.items():
+        if k not in seen and (v or "").strip():
+            lines.append(f"{k}={(v or '').strip()}")
+    env_file.parent.mkdir(parents=True, exist_ok=True)
+    tmp = env_file.with_suffix(".tmp")
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
+    os.replace(tmp, env_file)
+    try:
+        os.chmod(env_file, 0o600)
+    except OSError:  # pragma: no cover - sistemas sin permisos POSIX
+        pass
+    for k, v in values.items():
+        if (v or "").strip():
+            os.environ[k] = (v or "").strip()
+        else:
+            os.environ.pop(k, None)
+
+
 def _env_bool(name: str, default: bool) -> bool:
     value = os.environ.get(name)
     if value is None or value == "":
@@ -65,9 +108,16 @@ class Settings(BaseModel):
     log_level: str = "INFO"
     default_dry_run: bool = True
     http_timeout: float = 60.0
+    home: Path | None = None  # ANIME_CATALOG_HOME: directorio privado de la app (p. ej. en Termux)
+    profiles_dir: Path = Path("filters")
+    env_file: Path = Path(".env")  # donde la interfaz guarda las claves (permisos 600)
 
     @classmethod
     def from_env(cls, env_file: Path | None = Path(".env")) -> Settings:
+        home_raw = os.environ.get("ANIME_CATALOG_HOME")
+        home = Path(home_raw).expanduser() if home_raw else None
+        if home is not None:
+            load_dotenv(home / ".env")
         if env_file is not None:
             load_dotenv(env_file)
         e = os.environ.get
@@ -76,7 +126,8 @@ class Settings(BaseModel):
             v = e(name)
             return v.strip() if v and v.strip() else None
 
-        db = Path(e("DATABASE_PATH") or "data/anime_catalog.db")
+        base = home if home is not None else Path(".")
+        db = Path(e("DATABASE_PATH") or base / "data" / "anime_catalog.db")
         return cls(
             mdblist_api_key=opt("MDBLIST_API_KEY"),
             tmdb_api_key=opt("TMDB_API_KEY"),
@@ -89,12 +140,28 @@ class Settings(BaseModel):
             mdblist_api_url=(e("MDBLIST_API_URL") or "https://api.mdblist.com").rstrip("/"),
             database_path=db,
             datasets_dir=Path(e("DATASETS_DIR") or db.parent / "datasets"),
-            reports_dir=Path(e("REPORTS_DIR") or "reports"),
-            overrides_path=Path(e("OVERRIDES_PATH") or "overrides.yaml"),
+            reports_dir=Path(e("REPORTS_DIR") or base / "reports"),
+            overrides_path=Path(e("OVERRIDES_PATH") or base / "overrides.yaml"),
+            home=home,
+            profiles_dir=Path(e("PROFILES_DIR") or (home / "profiles" if home else "filters")),
+            env_file=(home / ".env") if home else (env_file or Path(".env")),
             log_level=(e("LOG_LEVEL") or "INFO").upper(),
             default_dry_run=_env_bool("DEFAULT_DRY_RUN", True),
             http_timeout=float(e("HTTP_TIMEOUT") or 60),
         )
+
+    def public_summary(self) -> dict[str, Any]:
+        """Estado de la configuración SIN valores secretos (apto para la interfaz web)."""
+        return {
+            "mdblist": bool(self.mdblist_api_key),
+            "tmdb": self.has_tmdb,
+            "tvdb": bool(self.tvdb_api_key),
+            "home": str(self.home) if self.home else None,
+            "database": str(self.database_path),
+            "profiles_dir": str(self.profiles_dir),
+            "reports_dir": str(self.reports_dir),
+            "default_dry_run": self.default_dry_run,
+        }
 
     @property
     def has_tmdb(self) -> bool:
