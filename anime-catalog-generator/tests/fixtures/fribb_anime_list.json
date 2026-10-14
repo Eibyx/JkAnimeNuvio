@@ -1,0 +1,738 @@
+[
+ {
+  "type": "TV",
+  "anidb_id": 69,
+  "anilist_id": 21,
+  "animecountdown_id": 38636,
+  "animenewsnetwork_id": 836,
+  "anime-planet_id": "one-piece",
+  "anisearch_id": 2227,
+  "imdb_id": [
+   "tt0388629"
+  ],
+  "kitsu_id": 12,
+  "livechart_id": 321,
+  "mal_id": 21,
+  "simkl_id": 38636,
+  "themoviedb_id": {
+   "tv": 37854
+  },
+  "tvdb_id": 81797
+ },
+ {
+  "type": "MOVIE",
+  "anidb_id": 112,
+  "anilist_id": 199,
+  "animecountdown_id": 39079,
+  "animenewsnetwork_id": 377,
+  "anime-planet_id": "spirited-away",
+  "anisearch_id": 2895,
+  "imdb_id": [
+   "tt0245429"
+  ],
+  "kitsu_id": 176,
+  "livechart_id": 3084,
+  "mal_id": 199,
+  "simkl_id": 39079,
+  "themoviedb_id": {
+   "movie": [
+    129
+   ]
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 132,
+  "anilist_id": 136,
+  "animecountdown_id": 40441,
+  "animenewsnetwork_id": 1134,
+  "anime-planet_id": "hunter-x-hunter",
+  "anisearch_id": 3074,
+  "imdb_id": [
+   "tt0426719"
+  ],
+  "kitsu_id": 115,
+  "livechart_id": 3758,
+  "mal_id": 136,
+  "simkl_id": 40441,
+  "themoviedb_id": {
+   "tv": 45952
+  },
+  "tvdb_id": 79076,
+  "season": {
+   "tvdb": 1,
+   "tmdb": 1
+  }
+ },
+ {
+  "type": "SPECIAL",
+  "anidb_id": 754,
+  "anilist_id": 1047,
+  "animecountdown_id": 41384,
+  "animenewsnetwork_id": 879,
+  "anime-planet_id": "on-your-mark",
+  "anisearch_id": 2226,
+  "kitsu_id": 937,
+  "livechart_id": 6385,
+  "mal_id": 1047,
+  "simkl_id": 41384,
+  "themoviedb_id": {
+   "movie": [
+    10840
+   ]
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 8550,
+  "anilist_id": 11061,
+  "animecountdown_id": 40398,
+  "animenewsnetwork_id": 13262,
+  "anime-planet_id": "hunter-x-hunter-2011",
+  "anisearch_id": 7223,
+  "imdb_id": [
+   "tt2098220"
+  ],
+  "kitsu_id": 6448,
+  "livechart_id": 317,
+  "mal_id": 11061,
+  "simkl_id": 40398,
+  "themoviedb_id": {
+   "tv": 46298
+  },
+  "tvdb_id": 252322
+ },
+ {
+  "type": "TV",
+  "anidb_id": 9541,
+  "anilist_id": 16498,
+  "animecountdown_id": 39687,
+  "animenewsnetwork_id": 14950,
+  "anime-planet_id": "attack-on-titan",
+  "anisearch_id": 8219,
+  "imdb_id": [
+   "tt2560140"
+  ],
+  "kitsu_id": 7442,
+  "livechart_id": 38,
+  "mal_id": 16498,
+  "simkl_id": 39687,
+  "themoviedb_id": {
+   "tv": 1429
+  },
+  "tvdb_id": 267440,
+  "season": {
+   "tvdb": 1,
+   "tmdb": 1
+  }
+ },
+ {
+  "type": "OVA",
+  "anidb_id": 9826,
+  "anilist_id": 18397,
+  "animecountdown_id": 38688,
+  "animenewsnetwork_id": 17609,
+  "anime-planet_id": "attack-on-titan-ova",
+  "anisearch_id": 8677,
+  "imdb_id": [
+   "tt2560140"
+  ],
+  "kitsu_id": 7694,
+  "livechart_id": 139,
+  "mal_id": 18397,
+  "simkl_id": 38688,
+  "themoviedb_id": {
+   "tv": 1429
+  },
+  "tvdb_id": 267440,
+  "season": {
+   "tvdb": 0,
+   "tmdb": 0
+  }
+ },
+ {
+  "type": "MOVIE",
+  "anidb_id": 10583,
+  "animecountdown_id": 49394,
+  "anisearch_id": 9587,
+  "imdb_id": [
+   "tt3646944",
+   "tt3646946"
+  ],
+  "simkl_id": 49394,
+  "themoviedb_id": {
+   "tv": 1429
+  },
+  "tvdb_id": 267440,
+  "season": {
+   "tvdb": 0,
+   "tmdb": 0
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 10944,
+  "anilist_id": 20958,
+  "animecountdown_id": 439744,
+  "animenewsnetwork_id": 16681,
+  "anime-planet_id": "attack-on-titan-2nd-season",
+  "anisearch_id": 10082,
+  "imdb_id": [
+   "tt2560140"
+  ],
+  "kitsu_id": 8671,
+  "livechart_id": 754,
+  "mal_id": 25777,
+  "simkl_id": 439744,
+  "themoviedb_id": {
+   "tv": 1429
+  },
+  "tvdb_id": 267440,
+  "season": {
+   "tvdb": 2,
+   "tmdb": 2
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 11468,
+  "anilist_id": 21281,
+  "animecountdown_id": 513950,
+  "animenewsnetwork_id": 17449,
+  "anime-planet_id": "attack-on-titan-junior-high",
+  "anisearch_id": 10608,
+  "imdb_id": [
+   "tt4906830"
+  ],
+  "kitsu_id": 11315,
+  "livechart_id": 1756,
+  "mal_id": 31374,
+  "simkl_id": 513950,
+  "themoviedb_id": {
+   "tv": 63510
+  },
+  "tvdb_id": 299882,
+  "season": {
+   "tvdb": 1,
+   "tmdb": 1
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 13241,
+  "anilist_id": 99147,
+  "animecountdown_id": 694485,
+  "animenewsnetwork_id": 19819,
+  "anime-planet_id": "attack-on-titan-3rd-season",
+  "anisearch_id": 12550,
+  "imdb_id": [
+   "tt2560140"
+  ],
+  "kitsu_id": 13569,
+  "livechart_id": 2737,
+  "mal_id": 35760,
+  "simkl_id": 694485,
+  "themoviedb_id": {
+   "tv": 1429
+  },
+  "tvdb_id": 267440,
+  "season": {
+   "tvdb": 3,
+   "tmdb": 3
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 14107,
+  "anilist_id": 101922,
+  "animecountdown_id": 831411,
+  "animenewsnetwork_id": 21101,
+  "anime-planet_id": "demon-slayer-kimetsu-no-yaiba",
+  "anisearch_id": 13658,
+  "imdb_id": [
+   "tt9335498"
+  ],
+  "kitsu_id": 41370,
+  "livechart_id": 3311,
+  "mal_id": 38000,
+  "simkl_id": 831411,
+  "themoviedb_id": {
+   "tv": 85937
+  },
+  "tvdb_id": 348545,
+  "season": {
+   "tvdb": 1,
+   "tmdb": 1
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 14439,
+  "anilist_id": 104461,
+  "animecountdown_id": 925873,
+  "animenewsnetwork_id": 22482,
+  "anime-planet_id": "room-camp",
+  "anisearch_id": 14117,
+  "imdb_id": [
+   "tt7742120"
+  ],
+  "kitsu_id": 41978,
+  "livechart_id": 3553,
+  "mal_id": 38476,
+  "simkl_id": 925873,
+  "themoviedb_id": {
+   "tv": 76075
+  },
+  "tvdb_id": 330692,
+  "season": {
+   "tvdb": 0,
+   "tmdb": 0
+  },
+  "episode_offset": {
+   "tvdb": 4,
+   "tmdb": 4
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 14444,
+  "anilist_id": 104578,
+  "animecountdown_id": 931899,
+  "animenewsnetwork_id": 21812,
+  "anime-planet_id": "attack-on-titan-3rd-season-part-ii",
+  "anisearch_id": 13942,
+  "imdb_id": [
+   "tt2560140"
+  ],
+  "kitsu_id": 41982,
+  "livechart_id": 3558,
+  "mal_id": 38524,
+  "simkl_id": 931899,
+  "themoviedb_id": {
+   "tv": 1429
+  },
+  "tvdb_id": 267440,
+  "season": {
+   "tvdb": 3,
+   "tmdb": 3
+  },
+  "episode_offset": {
+   "tvdb": 12,
+   "tmdb": 12
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 14977,
+  "anilist_id": 110277,
+  "animecountdown_id": 1120029,
+  "animenewsnetwork_id": 22277,
+  "anime-planet_id": "attack-on-titan-the-final-season",
+  "anisearch_id": 14484,
+  "imdb_id": [
+   "tt2560140"
+  ],
+  "kitsu_id": 42422,
+  "livechart_id": 9491,
+  "mal_id": 40028,
+  "simkl_id": 1120029,
+  "themoviedb_id": {
+   "tv": 1429
+  },
+  "tvdb_id": 267440,
+  "season": {
+   "tvdb": 4,
+   "tmdb": 4
+  }
+ },
+ {
+  "type": "MOVIE",
+  "anidb_id": 15113,
+  "anilist_id": 112151,
+  "animecountdown_id": 1176707,
+  "animenewsnetwork_id": 23040,
+  "anime-planet_id": "demon-slayer-kimetsu-no-yaiba-movie-mugen-train",
+  "anisearch_id": 14653,
+  "imdb_id": [
+   "tt11032374"
+  ],
+  "kitsu_id": 42586,
+  "livechart_id": 9614,
+  "mal_id": 40456,
+  "simkl_id": 1176707,
+  "themoviedb_id": {
+   "movie": [
+    635302
+   ]
+  },
+  "tvdb_id": 348545,
+  "season": {
+   "tvdb": 0
+  },
+  "episode_offset": {
+   "tvdb": 1
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 15275,
+  "anilist_id": 113415,
+  "animecountdown_id": 1211265,
+  "animenewsnetwork_id": 22944,
+  "anime-planet_id": "jujutsu-kaisen",
+  "anisearch_id": 14790,
+  "imdb_id": [
+   "tt12343534"
+  ],
+  "kitsu_id": 42765,
+  "livechart_id": 9680,
+  "mal_id": 40748,
+  "simkl_id": 1211265,
+  "themoviedb_id": {
+   "tv": 95479
+  },
+  "tvdb_id": 377543,
+  "season": {
+   "tvdb": 1,
+   "tmdb": 1
+  }
+ },
+ {
+  "type": "MOVIE",
+  "anidb_id": 15582,
+  "anilist_id": 119113,
+  "animecountdown_id": 1358719,
+  "animenewsnetwork_id": 23718,
+  "anime-planet_id": "attack-on-titan-movie-4-chronicle",
+  "anisearch_id": 15289,
+  "imdb_id": [
+   "tt12415546"
+  ],
+  "kitsu_id": 43212,
+  "livechart_id": 9996,
+  "mal_id": 42091,
+  "simkl_id": 1358719,
+  "themoviedb_id": {
+   "movie": [
+    714194
+   ]
+  },
+  "tvdb_id": 267440,
+  "season": {
+   "tvdb": 0
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 16054,
+  "anilist_id": 142329,
+  "animecountdown_id": 1546285,
+  "animenewsnetwork_id": 24043,
+  "anime-planet_id": "demon-slayer-kimetsu-no-yaiba-entertainment-district-arc",
+  "anisearch_id": 15986,
+  "imdb_id": [
+   "tt9335498"
+  ],
+  "kitsu_id": 44081,
+  "livechart_id": 10420,
+  "mal_id": 47778,
+  "simkl_id": 1546285,
+  "themoviedb_id": {
+   "tv": 85937
+  },
+  "tvdb_id": 348545,
+  "season": {
+   "tvdb": 3,
+   "tmdb": 3
+  }
+ },
+ {
+  "type": "MOVIE",
+  "anidb_id": 16169,
+  "anilist_id": 131573,
+  "animecountdown_id": 1578599,
+  "animenewsnetwork_id": 24193,
+  "anime-planet_id": "jujutsu-kaisen-0-the-movie",
+  "anisearch_id": 16092,
+  "imdb_id": [
+   "tt14331144"
+  ],
+  "kitsu_id": 44212,
+  "livechart_id": 10491,
+  "mal_id": 48561,
+  "simkl_id": 1578599,
+  "themoviedb_id": {
+   "movie": [
+    810693
+   ]
+  },
+  "tvdb_id": 377543,
+  "season": {
+   "tvdb": 0
+  },
+  "episode_offset": {
+   "tvdb": 1
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 16177,
+  "anilist_id": 131681,
+  "animecountdown_id": 1579947,
+  "animenewsnetwork_id": 24648,
+  "anime-planet_id": "attack-on-titan-the-final-season-part-ii",
+  "anisearch_id": 16103,
+  "imdb_id": [
+   "tt2560140"
+  ],
+  "kitsu_id": 44240,
+  "livechart_id": 10487,
+  "mal_id": 48583,
+  "simkl_id": 1579947,
+  "themoviedb_id": {
+   "tv": 1429
+  },
+  "tvdb_id": 267440,
+  "season": {
+   "tvdb": 4,
+   "tmdb": 4
+  },
+  "episode_offset": {
+   "tvdb": 16,
+   "tmdb": 16
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 16803,
+  "anilist_id": 129874,
+  "animecountdown_id": 1738291,
+  "animenewsnetwork_id": 24792,
+  "anime-planet_id": "demon-slayer-kimetsu-no-yaiba-mugen-train",
+  "anisearch_id": 16614,
+  "imdb_id": [
+   "tt9335498"
+  ],
+  "kitsu_id": 45249,
+  "livechart_id": 10816,
+  "mal_id": 49926,
+  "simkl_id": 1738291,
+  "themoviedb_id": {
+   "tv": 85937
+  },
+  "tvdb_id": 348545,
+  "season": {
+   "tvdb": 2,
+   "tmdb": 2
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 17196,
+  "anilist_id": 145064,
+  "animecountdown_id": 1847578,
+  "animenewsnetwork_id": 25346,
+  "anime-planet_id": "jujutsu-kaisen-season-2",
+  "anisearch_id": 17085,
+  "imdb_id": [
+   "tt12343534"
+  ],
+  "kitsu_id": 45857,
+  "livechart_id": 11083,
+  "mal_id": 51009,
+  "simkl_id": 1847578,
+  "themoviedb_id": {
+   "tv": 95479
+  },
+  "tvdb_id": 377543,
+  "season": {
+   "tvdb": 2,
+   "tmdb": 2
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 17198,
+  "anilist_id": 145139,
+  "animecountdown_id": 1848368,
+  "animenewsnetwork_id": 25353,
+  "anime-planet_id": "demon-slayer-kimetsu-no-yaiba-swordsmith-village-arc",
+  "anisearch_id": 17088,
+  "imdb_id": [
+   "tt9335498"
+  ],
+  "kitsu_id": 45866,
+  "livechart_id": 11084,
+  "mal_id": 51019,
+  "simkl_id": 1848368,
+  "themoviedb_id": {
+   "tv": 85937
+  },
+  "tvdb_id": 348545,
+  "season": {
+   "tvdb": 4,
+   "tmdb": 4
+  }
+ },
+ {
+  "type": "SPECIAL",
+  "anidb_id": 17303,
+  "anilist_id": 146984,
+  "animecountdown_id": 1883416,
+  "animenewsnetwork_id": 25492,
+  "anime-planet_id": "attack-on-titan-the-final-season-the-final-chapters",
+  "anisearch_id": 17265,
+  "imdb_id": [
+   "tt2560140"
+  ],
+  "kitsu_id": 46038,
+  "livechart_id": 11174,
+  "mal_id": 51535,
+  "simkl_id": 1883416,
+  "themoviedb_id": {
+   "tv": 1429
+  },
+  "tvdb_id": 267440,
+  "season": {
+   "tvdb": 4,
+   "tmdb": 4
+  },
+  "episode_offset": {
+   "tvdb": 28,
+   "tmdb": 28
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 18067,
+  "anilist_id": 166240,
+  "animecountdown_id": 2191900,
+  "animenewsnetwork_id": 28695,
+  "anime-planet_id": "demon-slayer-kimetsu-no-yaiba-hashira-training-arc",
+  "anisearch_id": 18460,
+  "imdb_id": [
+   "tt9335498"
+  ],
+  "kitsu_id": 47635,
+  "livechart_id": 12113,
+  "mal_id": 55701,
+  "simkl_id": 2191900,
+  "themoviedb_id": {
+   "tv": 85937
+  },
+  "tvdb_id": 348545,
+  "season": {
+   "tvdb": 5,
+   "tmdb": 5
+  }
+ },
+ {
+  "type": "ONA",
+  "anidb_id": 18131,
+  "anilist_id": 167404,
+  "animecountdown_id": 2215142,
+  "animenewsnetwork_id": 29140,
+  "anime-planet_id": "monsters-103-mercies-dragon-damnation",
+  "anisearch_id": 18567,
+  "imdb_id": [
+   "tt30475122"
+  ],
+  "kitsu_id": 47781,
+  "livechart_id": 12273,
+  "mal_id": 56055,
+  "simkl_id": 2215142,
+  "themoviedb_id": {
+   "movie": [
+    1230393
+   ]
+  }
+ },
+ {
+  "type": "ONA",
+  "anidb_id": 18325,
+  "anilist_id": 171630,
+  "animecountdown_id": 2325164,
+  "animenewsnetwork_id": 31073,
+  "anime-planet_id": "the-one-piece",
+  "anisearch_id": 18939,
+  "kitsu_id": 48322,
+  "livechart_id": 12460,
+  "mal_id": 57557,
+  "simkl_id": 2325164
+ },
+ {
+  "type": "TV",
+  "anidb_id": 18363,
+  "anilist_id": 172463,
+  "animecountdown_id": 2333706,
+  "animenewsnetwork_id": 31174,
+  "anime-planet_id": "jujutsu-kaisen-the-culling-game",
+  "anisearch_id": 18987,
+  "imdb_id": [
+   "tt12343534"
+  ],
+  "kitsu_id": 48363,
+  "livechart_id": 12482,
+  "mal_id": 57658,
+  "simkl_id": 2333706,
+  "themoviedb_id": {
+   "tv": 95479
+  },
+  "tvdb_id": 377543,
+  "season": {
+   "tvdb": 3,
+   "tmdb": 1
+  },
+  "episode_offset": {
+   "tmdb": 47
+  }
+ },
+ {
+  "type": "TV",
+  "anidb_id": 19975,
+  "anilist_id": 209895,
+  "animecountdown_id": 3063276,
+  "animenewsnetwork_id": 40050,
+  "anime-planet_id": "jujutsu-kaisen-the-culling-game-part-2",
+  "imdb_id": [
+   "tt12343534"
+  ],
+  "kitsu_id": 50627,
+  "livechart_id": 13573,
+  "mal_id": 63824,
+  "simkl_id": 3063276,
+  "themoviedb_id": {
+   "tv": 95479
+  },
+  "tvdb_id": 377543,
+  "season": {
+   "tvdb": 3,
+   "tmdb": 1
+  },
+  "episode_offset": {
+   "tvdb": 12,
+   "tmdb": 59
+  }
+ },
+ {
+  "type": "MOVIE",
+  "anilist_id": 20691,
+  "animenewsnetwork_id": 16233,
+  "anime-planet_id": "attack-on-titan-movie-1-crimson-bow-and-arrow",
+  "kitsu_id": 8672,
+  "livechart_id": 513,
+  "mal_id": 23775
+ },
+ {
+  "type": "OVA",
+  "anilist_id": 20811,
+  "animecountdown_id": 419356,
+  "animenewsnetwork_id": 16278,
+  "anime-planet_id": "attack-on-titan-no-regrets",
+  "anisearch_id": 10001,
+  "kitsu_id": 8674,
+  "livechart_id": 755,
+  "mal_id": 25781,
+  "simkl_id": 419356
+ }
+]

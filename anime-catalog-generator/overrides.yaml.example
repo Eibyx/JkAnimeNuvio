@@ -1,0 +1,17 @@
+# Correcciones manuales persistentes. Copia como overrides.yaml (o usa `anime-catalog review set ...`,
+# que lo actualiza automáticamente). Nunca se pierden al actualizar los datasets de mappings.
+overrides:
+  # Forzar un TMDB concreto:
+  # - uid: anilist:12345
+  #   action: map
+  #   media_type: tv        # tv | movie
+  #   tmdb_id: 54321
+  #   note: "AniBridge apunta a la serie equivocada"
+  # Excluir siempre una entrada:
+  # - uid: anilist:999
+  #   action: exclude
+  #   note: "recopilatorio que no queremos"
+  # Forzar que una entrada pertenezca a la serie canónica de otra:
+  # - uid: anilist:777
+  #   action: canonical
+  #   canonical_uid: anilist:21

@@ -1,0 +1,25 @@
+# Películas de anime 1990-2026 (TMDB Movie IDs). Las películas nunca se agrupan con series.
+catalog:
+  name: "Anime Movies"
+  description: "Películas de anime desde 1990"
+
+filters:
+  start_year: 1990
+  end_year: 2026
+  formats: [MOVIE]
+  score:
+    provider: anilist
+    field: averageScore
+    min: 70
+  exclude_compilations: true     # recopilatorios de series de TV
+  include_adult: false
+
+canonical:
+  first_only: true
+  preserve_independent_movies: true
+
+mapping:
+  movie_allow_show_mapping: false   # una película nunca se convierte en serie
+
+mdblist:
+  mode: append

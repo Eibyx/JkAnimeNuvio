@@ -1,0 +1,18 @@
+# Series del estudio MAPPA (estudio principal), consultando dinámicamente sus obras en AniList.
+catalog:
+  name: "MAPPA Anime"
+  description: "Series de anime producidas por MAPPA"
+
+filters:
+  formats: [TV]
+  studios:
+    include: [MAPPA]
+    main_only: true
+  temporal_mode: original_release_year
+  include_adult: false
+
+canonical:
+  first_only: true
+
+mdblist:
+  mode: append

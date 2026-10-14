@@ -1,0 +1,32 @@
+# Isekai con relevancia del tag >= 60% y puntuación >= 70. Ejemplo de expresión AND/OR/NOT.
+catalog:
+  name: "Isekai Anime"
+  description: "Isekai bien valorados (sin terror)"
+
+filters:
+  formats: [TV, MOVIE]
+  start_year: 2000
+  end_year: 2026
+  tags:
+    include: [Isekai]
+    min_rank: 60
+  score:
+    provider: anilist
+    field: averageScore
+    min: 70
+  expression:
+    and:
+      - not:
+          genres:
+            include: [Horror]
+      - or:
+          - genres: {include: [Fantasy]}
+          - genres: {include: [Adventure]}
+          - tags: {include: [Magic], min_rank: 50}
+  include_adult: false
+
+canonical:
+  first_only: true
+
+mdblist:
+  mode: append

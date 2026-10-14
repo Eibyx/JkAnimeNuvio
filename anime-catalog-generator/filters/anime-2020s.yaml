@@ -1,0 +1,67 @@
+# Series de anime estrenadas entre 2020 y 2026 (una entrada por serie, solo la original).
+catalog:
+  name: "Anime 2020-2026"
+  description: "Series de anime estrenadas entre 2020 y 2026"
+  enabled: true
+
+source:
+  primary: anilist
+
+filters:
+  start_year: 2020
+  end_year: 2026
+  temporal_mode: original_release_year   # el estreno de la PRIMERA temporada decide
+  formats:
+    - TV
+  score:
+    provider: anilist
+    field: averageScore
+    min: 75
+    max: 100
+  genres:
+    include: []
+    exclude: []
+    mode: OR
+  tags:
+    include: []
+    exclude: []
+    min_rank: 0
+    mode: OR
+  studios:
+    include: []
+    exclude: []
+    main_only: false
+  include_adult: false
+  include_future: false
+
+canonical:
+  enabled: true
+  first_only: true
+  collapse_seasons: true
+  preserve_remakes: true
+  preserve_spinoffs: true
+  preserve_independent_movies: true
+
+mapping:
+  primary: anibridge
+  fallbacks: [kometa, fribb, anime_lists, tmdb]
+  verify_tmdb: true
+  allow_title_search: true
+  minimum_confidence: 0.90
+  ambiguous_policy: review
+
+duplicates:
+  enabled: true
+  dedupe_by_tmdb_id: true
+  dedupe_by_canonical_anime: true
+
+mdblist:
+  mode: append
+  create_if_missing: true
+  batch_size: 100
+  preserve_existing: true
+
+reports:
+  json: true
+  csv: true
+  html: true

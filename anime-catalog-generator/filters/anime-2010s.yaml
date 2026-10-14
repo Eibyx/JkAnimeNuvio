@@ -1,0 +1,20 @@
+# Década de 2010: series originales estrenadas entre 2010 y 2019.
+catalog:
+  name: "Anime 2010s"
+  description: "Series de anime cuya primera temporada se estrenó entre 2010 y 2019"
+
+filters:
+  decades: [2010]
+  temporal_mode: original_release_year
+  formats: [TV]
+  score:
+    provider: anilist
+    field: averageScore
+    min: 70
+  include_adult: false
+
+canonical:
+  first_only: true
+
+mdblist:
+  mode: append
