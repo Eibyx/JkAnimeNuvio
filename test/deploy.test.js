@@ -1,5 +1,5 @@
 /**
- * Cloud deployment (Koyeb): optional token, rate limit, public URL behind a
+ * Cloud deployment (Render): optional token, rate limit, public URL behind a
  * proxy, /status, error responses and clean shutdown. With none of the new
  * variables set, the addon must behave exactly as before.
  */
@@ -90,19 +90,58 @@ test("a wrong, partial or longer token is rejected", async () => {
 test("the install page under the token shows the full URL; the token is never echoed elsewhere", async () => {
   const { get, close } = await serve({ ADDON_TOKEN: TOKEN })
   try {
-    const page = await (await get(`/${TOKEN}/`, { "X-Forwarded-Proto": "https", "X-Forwarded-Host": "mi-app.koyeb.app" })).text()
-    assert.ok(page.includes(`https://mi-app.koyeb.app/${TOKEN}/manifest.json`))
+    const page = await (await get(`/${TOKEN}/`, { "X-Forwarded-Proto": "https", "X-Forwarded-Host": "mi-app.onrender.com" })).text()
+    assert.ok(page.includes(`https://mi-app.onrender.com/${TOKEN}/manifest.json`))
     for (const p of ["/manifest.json", "/nope", "/%E0%A4%A/manifest.json"]) {
       assert.ok(!(await (await get(p)).text()).includes(TOKEN), p)
     }
   } finally { await close() }
 })
 
-test("ADDON_TOKEN with characters that do not fit in a URL segment refuses to start", () => {
-  process.env.ADDON_TOKEN = "has/slash"
-  assert.throws(() => createApp(), /ADDON_TOKEN/)
-  process.env.ADDON_TOKEN = "has space"
-  assert.throws(() => createApp(), /ADDON_TOKEN/)
+test("ADDON_TOKEN with characters that do not fit in a URL path refuses to start", () => {
+  for (const bad of ["has space", "a?b", "a#b", "a%2Fb", "/leading", "trailing/", "a//b"]) {
+    process.env.ADDON_TOKEN = bad
+    assert.throws(() => createApp(), /ADDON_TOKEN/, bad)
+  }
+})
+
+// Same shape as Render's generateValue: standard base64 of 256 bits (+ / =).
+const RENDER_TOKEN = "B0jr+hAPOY7pg92/N0c9MN4yecczLMdwnx4OkA1KFUk="
+
+test("a Render-generated base64 token (+ / =) works, typed as is or percent-encoded", async () => {
+  installFakeNet()
+  const { get, close } = await serve({ ADDON_TOKEN: RENDER_TOKEN })
+  try {
+    const encoded = encodeURIComponent(RENDER_TOKEN)
+    for (const t of [RENDER_TOKEN, encoded]) {
+      assert.equal((await (await get(`/${t}/manifest.json`)).json()).id, "com.eibyx.jkanimenuvio", t)
+      const configured = await (await get(`/${t}/numbering=tmdb&mapping=absolute/manifest.json`)).json()
+      assert.equal(configured.id, "com.eibyx.jkanimenuvio.tmdb.absolute", t)
+      assert.ok((await (await get(`/${t}/stream/series/tt7441658:1:5.json`)).json()).streams.length > 0, t)
+    }
+    // Only the exact token, at the start of the path, followed by "/" or the end.
+    for (const p of ["/manifest.json", "/B0jr+hAPOY7pg92/manifest.json", `/${RENDER_TOKEN}x/manifest.json`,
+      `/${RENDER_TOKEN.slice(0, -1)}/manifest.json`, `/x/${RENDER_TOKEN}/manifest.json`, `/${RENDER_TOKEN.replace("+", " ")}/manifest.json`]) {
+      assert.equal((await get(p)).status, 404, p)
+    }
+    const page = await (await get(`/${RENDER_TOKEN}`, { "X-Forwarded-Proto": "https" })).text()
+    assert.ok(page.includes(`/${RENDER_TOKEN}/manifest.json`))
+  } finally { await close() }
+})
+
+test("behind Render's proxy: HTTPS install URL, real client IP for /status and the rate limit", async () => {
+  // Render terminates TLS, keeps the public Host and appends its own hop to X-Forwarded-For.
+  // (fetch cannot override Host, so the page shows the local host with Render's scheme.)
+  const render = (ip) => ({ "X-Forwarded-Proto": "https", "X-Forwarded-For": `${ip}, 10.201.3.4` })
+  const { get, close } = await serve({ ADDON_TOKEN: TOKEN, STATUS_ENABLED: "true", TRUST_PROXY: "true", RATE_LIMIT_PER_MIN: "2" })
+  try {
+    const page = await (await get(`/${TOKEN}/`, render("203.0.113.7"))).text()
+    assert.match(page, new RegExp(`https://127\\.0\\.0\\.1:\\d+/${TOKEN}/manifest\\.json`))
+    assert.equal((await (await get(`/${TOKEN}/status`, render("203.0.113.7"))).json()).yourIp, "203.0.113.7")
+    assert.equal((await get(`/${TOKEN}/manifest.json`, render("203.0.113.7"))).status, 429, "third request of this client")
+    assert.equal((await get(`/${TOKEN}/manifest.json`, render("198.51.100.9"))).status, 200, "another client has its own budget")
+    assert.equal((await get("/health", render("203.0.113.7"))).status, 200, "the health check is never limited")
+  } finally { await close() }
 })
 
 test("the token never reaches the startup log", async () => {
@@ -141,8 +180,10 @@ test("install page honours PUBLIC_URL, then X-Forwarded-Proto/Host, and escapes 
     get: (n) => (n.toLowerCase() === "host" ? host : headers[n.toLowerCase()]),
   })
   assert.equal(publicBase(req({})), "http://127.0.0.1:3000")
-  assert.equal(publicBase(req({ "x-forwarded-proto": "https", "x-forwarded-host": "mi-app.koyeb.app" })), "https://mi-app.koyeb.app")
+  assert.equal(publicBase(req({ "x-forwarded-proto": "https", "x-forwarded-host": "mi-app.onrender.com" })), "https://mi-app.onrender.com")
   assert.equal(publicBase(req({ "x-forwarded-proto": "https, http" })), "https://127.0.0.1:3000")
+  // Render: public Host kept, TLS terminated at the proxy, no X-Forwarded-Host.
+  assert.equal(publicBase(req({ "x-forwarded-proto": "https" }, "mi-app.onrender.com")), "https://mi-app.onrender.com")
   assert.equal(publicBase(req({ "x-forwarded-proto": "javascript", "x-forwarded-host": "evil\"><script>" })), "http://127.0.0.1:3000")
   process.env.PUBLIC_URL = "https://anime.example.com/"
   assert.equal(publicBase(req({ "x-forwarded-host": "other.example" })), "https://anime.example.com")
@@ -266,13 +307,38 @@ test("JKAnime outcomes are classified: 404 is reachable, challenge is BLOCKED, t
   assert.ok(!JSON.stringify(s).includes("jkanime.net"), "no URLs kept")
 })
 
+test("render.yaml: free Docker web service, health check, generated token, optional secrets, no PORT", () => {
+  const y = fs.readFileSync(path.join(ROOT, "render.yaml"), "utf8")
+  const lines = y.split("\n").filter((l) => !/^\s*#/.test(l)).join("\n")
+  assert.match(lines, /^services:\n {2}- type: web$/m)
+  for (const [k, v] of [["runtime", "docker"], ["plan", "free"], ["branch", "main"], ["dockerfilePath", "./Dockerfile"],
+    ["healthCheckPath", "/health"], ["autoDeployTrigger", "commit"]]) {
+    assert.match(lines, new RegExp(`^ {4}${k}: ${v.replace(/[./]/g, "\\$&")}$`, "m"), k)
+  }
+  assert.match(lines, /- key: ADDON_TOKEN\n\s+generateValue: true/)
+  for (const k of ["TMDB_API_READ_TOKEN", "TVDB_API_KEY", "TVDB_SUBSCRIBER_PIN"]) {
+    assert.match(lines, new RegExp(`- key: ${k}\\n\\s+sync: false`), k)
+  }
+  for (const [k, v] of [["STATUS_ENABLED", "true"], ["RATE_LIMIT_PER_MIN", "60"], ["TRUST_PROXY", "true"], ["JK_CONCURRENCY", "2"],
+    ["HTTP_MAX_CONCURRENCY", "8"], ["HTTP_MAX_PER_HOST", "3"], ["CACHE_MAX_ENTRIES", "300"]]) {
+    assert.match(lines, new RegExp(`- key: ${k}\\n\\s+value: "${v}"`), k)
+  }
+  assert.doesNotMatch(lines, /key: PORT\b|autoDeploy:/)
+  // Every key Render will set is one the addon reads.
+  const docs = fs.readFileSync(path.join(ROOT, ".env.example"), "utf8")
+  for (const [, k] of lines.matchAll(/- key: (\w+)/g)) assert.match(docs, new RegExp(`\\b${k}=`), k)
+})
+
 test("Dockerfile and .dockerignore follow the deployment rules", () => {
   const docker = fs.readFileSync(path.join(ROOT, "Dockerfile"), "utf8")
   assert.match(docker, /^FROM node:22-(alpine|slim)/m)
   assert.match(docker, /npm ci --omit=dev/)
   assert.match(docker, /^USER (node|\d+)/m)
   assert.match(docker, /NODE_ENV=production/)
-  assert.match(docker, /^HEALTHCHECK [\s\S]*\/health/m)
+  assert.match(docker, /^HEALTHCHECK [\s\S]*process\.env\.PORT[\s\S]*\/health/m)
+  // No port that contradicts the platform: Render's default, overridable through $PORT.
+  assert.match(docker, /PORT=10000/)
+  assert.doesNotMatch(docker, /8000/)
   const ignore = fs.readFileSync(path.join(ROOT, ".dockerignore"), "utf8").split("\n").map((l) => l.trim())
   for (const entry of [".env", "node_modules", "test", "test-support", "docs", ".git"]) assert.ok(ignore.includes(entry), entry)
 })
