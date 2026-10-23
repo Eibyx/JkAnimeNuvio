@@ -4,7 +4,7 @@
 
 **Anime en español de JKAnime, directo en Nuvio. En tu propio dispositivo.**
 
-[![Versión](https://img.shields.io/badge/versi%C3%B3n-0.3.0-blue)](#actualizar)
+[![Versión](https://img.shields.io/badge/versi%C3%B3n-0.4.0-blue)](#actualizar)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org/en/download)
 [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-green)](LICENSE)
 [![Pruebas](https://github.com/Eibyx/JkAnimeNuvio/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Eibyx/JkAnimeNuvio/actions/workflows/ci.yml)
@@ -18,6 +18,8 @@ Basado en [animeflv-stremio-addon](https://github.com/Pigamer37/animeflv-stremio
 > [!IMPORTANT]
 > **JKAnimeNuvio es self-hosted.** No existe un servidor público: cada persona lo ejecuta en su
 > propio teléfono Android (con Termux) o en su computadora, y lo instala en Nuvio desde ahí.
+> También puedes desplegar **tu propia instancia personal en la nube** (por ejemplo, en
+> [Koyeb](#koyeb)), siempre protegida con un token privado.
 
 ---
 
@@ -28,15 +30,16 @@ Basado en [animeflv-stremio-addon](https://github.com/Pigamer37/animeflv-stremio
 3. [¿Qué necesitas para utilizar JKAnimeNuvio?](#requisitos)
 4. [Instalación en Android con Termux](#android-termux)
 5. [Instalación en Windows, Linux y macOS](#pc)
-6. [Configurar TMDB y TVDB](#configurar-api)
-7. [Cómo utilizar JKAnimeNuvio en Nuvio](#usar-en-nuvio)
-8. [Configuración de temporadas](#temporadas)
-9. [Cómo actualizar JKAnimeNuvio](#actualizar)
-10. [Problemas frecuentes y soluciones](#problemas)
-11. [Pruebas y verificación](#pruebas)
-12. [Preguntas frecuentes](#faq)
-13. [Para desarrolladores](#desarrolladores)
-14. [Créditos, licencia y avisos](#creditos)
+6. [Despliegue en Koyeb (instancia personal en la nube)](#koyeb)
+7. [Configurar TMDB y TVDB](#configurar-api)
+8. [Cómo utilizar JKAnimeNuvio en Nuvio](#usar-en-nuvio)
+9. [Configuración de temporadas](#temporadas)
+10. [Cómo actualizar JKAnimeNuvio](#actualizar)
+11. [Problemas frecuentes y soluciones](#problemas)
+12. [Pruebas y verificación](#pruebas)
+13. [Preguntas frecuentes](#faq)
+14. [Para desarrolladores](#desarrolladores)
+15. [Créditos, licencia y avisos](#creditos)
 
 ---
 
@@ -127,7 +130,7 @@ directo de los siguientes:
 | 📱 Android con **Termux**, o una computadora con Windows, Linux o macOS | Sí | Es donde se ejecutará el servidor. |
 | 🟩 **Node.js 22 o superior** (LTS 22 o 24) | Sí | El entorno que ejecuta JKAnimeNuvio. Node.js 20 ya no tiene soporte. |
 | 🌿 **Git** | Sí | Para descargar y actualizar el proyecto. |
-| 🌐 **Conexión a Internet** | Sí | Una conexión doméstica o móvil normal. Las VPN y los servidores en la nube suelen estar bloqueados por JKAnime (Cloudflare). |
+| 🌐 **Conexión a Internet** | Sí | Una conexión doméstica o móvil normal. Las VPN y los servidores en la nube suelen estar bloqueados por JKAnime (Cloudflare); ver [Koyeb](#koyeb). |
 | 📺 **Nuvio** u otro cliente compatible con addons de Stremio | Sí | Donde verás el anime. |
 | 🔑 Credenciales de **TMDB** | Opcional, recomendado | Gratis. Mejora la identificación. |
 | 🔑 Credenciales de **TVDB** | Opcional, recomendado | Necesarias para animes muy recientes (ver abajo). |
@@ -435,6 +438,123 @@ En cualquier sistema, el servidor se detiene con **Ctrl + C**.
 
 ---
 
+<a id="koyeb"></a>
+
+## ☁️ Despliegue en Koyeb
+
+Si no quieres tener el teléfono o la computadora encendidos, puedes ejecutar **tu propia
+instancia personal** de JKAnimeNuvio en [Koyeb](https://www.koyeb.com/). El plan gratuito
+(1 servicio, 0,1 vCPU, 512 MB de RAM) alcanza para uso personal.
+
+> [!WARNING]
+> **Antes de empezar, ten en cuenta dos cosas:**
+> - **JKAnime puede bloquear la IP de Koyeb.** JKAnime está detrás de Cloudflare, que bloquea a
+>   menudo las IP de servidores en la nube. Si ocurre, tu instancia funcionará pero **no
+>   devolverá streams**, y `/status` lo indicará con `BLOCKED`. JKAnimeNuvio **no intenta
+>   saltarse** esa protección: en ese caso, usa la instalación en Termux o en tu computadora.
+> - **Tu instancia es privada.** Siempre con `ADDON_TOKEN`: sin token, cualquiera que descubra la
+>   dirección podría usar tu servidor (y hacer que JKAnime bloquee su IP). No compartas la URL de
+>   instalación: el token va dentro de ella.
+
+### Paso 1 · Prepara un token
+
+Genera una cadena aleatoria larga (solo letras, números, `-`, `_`, `.` y `~`). En Termux o en
+tu computadora:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"
+```
+
+Guárdala en un lugar seguro: será tu `ADDON_TOKEN`.
+
+### Paso 2 · Crea el servicio en Koyeb
+
+1. Entra en Koyeb y conecta tu cuenta de **GitHub** (si usas un *fork*, autoriza ese
+   repositorio).
+2. Crea un **Web Service** con origen **GitHub** y elige el repositorio `JkAnimeNuvio`,
+   rama `main`.
+3. En **Builder**, elige **Dockerfile** (el repositorio ya incluye uno; no hace falta cambiar
+   nada más).
+4. En **Instance**, elige la instancia gratuita y la región que prefieras.
+5. En **Ports**, deja el puerto **8000**, protocolo **HTTP**, ruta pública `/`.
+6. En **Health checks**, configura un chequeo **HTTP** en el puerto **8000** con la ruta
+   **`/health`**. Responde al instante y nunca consulta servicios externos, así que no falla si
+   JKAnime está bloqueado.
+7. Añade las **variables de entorno** del paso 3. Para `ADDON_TOKEN` y las credenciales,
+   usa el tipo **Secret** de Koyeb en lugar de texto plano.
+8. Pulsa **Deploy** y espera a que el estado sea *Healthy*. Koyeb te dará una dirección del
+   tipo `https://mi-app-miusuario.koyeb.app`.
+
+> [!NOTE]
+> Los nombres exactos de los menús de Koyeb pueden cambiar. Lo importante es: **Dockerfile**,
+> **puerto 8000**, health check **HTTP `/health`** y las variables del paso 3. Según el plan,
+> una instancia gratuita puede suspenderse tras un tiempo sin tráfico: la primera petición
+> tarda entonces unos segundos más.
+
+### Paso 3 · Variables de entorno
+
+| Variable | Valor en Koyeb | Para qué |
+|---|---|---|
+| `ADDON_TOKEN` | *(tu token, como Secret)* | **Obligatoria en la nube.** Sin el token, todo responde 404 (salvo `/health`). |
+| `TMDB_API_READ_TOKEN` | *(como Secret)* | Opcional, recomendada. Ver [Configurar TMDB y TVDB](#configurar-api). |
+| `TVDB_API_KEY` | *(como Secret)* | Opcional, recomendada. |
+| `TVDB_SUBSCRIBER_PIN` | *(como Secret)* | Solo si tu clave de TVDB lo exige. |
+| `STATUS_ENABLED` | `true` | Activa `/{token}/status` para saber si JKAnime bloquea la IP. |
+| `RATE_LIMIT_PER_MIN` | `60` | Límite de peticiones por IP y minuto. |
+| `TRUST_PROXY` | `true` | Koyeb está delante como proxy: así el límite se aplica a la IP real del cliente. |
+| `JK_CONCURRENCY` | `2` | Menos peticiones simultáneas a JKAnime (0,1 vCPU). |
+| `HTTP_MAX_CONCURRENCY` | `8` | Menos peticiones simultáneas en total. |
+| `HTTP_MAX_PER_HOST` | `3` | Menos peticiones simultáneas por servidor. |
+| `CACHE_MAX_ENTRIES` | `300` | Limita la memoria de las cachés (512 MB). |
+
+No hace falta definir `PORT`, `HOST` ni `NODE_ENV`: Koyeb y el `Dockerfile` ya lo hacen.
+`STREAM_TIMEOUT_MS` (25 s) y `EXTRACT_TIMEOUT_MS` (12 s) pueden quedarse por defecto; si ves
+muchos `TIMEOUT` en los registros, sube `STREAM_TIMEOUT_MS` a `30000`. Deja `STREAM_PROBE`
+desactivado: duplica peticiones y consume CPU. Ver [todas las variables](#todas-las-variables).
+
+### Paso 4 · Instálalo en Nuvio
+
+La dirección de instalación lleva tu token delante de `manifest.json`:
+
+```text
+https://mi-app-miusuario.koyeb.app/TU_TOKEN/manifest.json
+```
+
+1. Ábrela primero en el navegador: debe mostrar un texto que empieza por
+   `{"id":"com.eibyx.jkanimenuvio",…`.
+2. En Nuvio, añade el addon con esa misma dirección.
+3. Las [configuraciones de temporadas](#temporadas) también funcionan, siempre con el token
+   primero: `https://mi-app-miusuario.koyeb.app/TU_TOKEN/numbering=tmdb&mapping=absolute/manifest.json`.
+
+Abriendo `https://mi-app-miusuario.koyeb.app/TU_TOKEN/` verás la página con la dirección de
+instalación completa. Sin el token (o con uno incorrecto), todas las rutas responden `404`.
+
+### Paso 5 · Comprueba si JKAnime bloquea la IP
+
+1. **Salud:** `https://mi-app-miusuario.koyeb.app/health` → `{"ok":true}`.
+2. **Pide un episodio real** para que el servidor consulte JKAnime, por ejemplo Black Clover
+   T1 E1:
+   `https://mi-app-miusuario.koyeb.app/TU_TOKEN/stream/series/tt7441658:1:1.json`
+3. **Estado:** `https://mi-app-miusuario.koyeb.app/TU_TOKEN/status`. Mira `jkanime.last.result`
+   y `jkanime.verdict`:
+
+   | `jkanime.last.result` | Significado |
+   |---|---|
+   | `OK` | JKAnime responde desde Koyeb. |
+   | `BLOCKED` | Cloudflare bloquea la IP de Koyeb: **no habrá streams desde esta instancia**. Prueba otra región o usa Termux/tu computadora. |
+   | `ERROR` (con `code`) | Fallo puntual (`TIMEOUT`, `HTTP_5XX`…). Repite la prueba en unos minutos. |
+   | `null` | Todavía no se ha consultado JKAnime: haz el punto 2. |
+
+   `/status` también muestra versión, tiempo en marcha, memoria, tamaño de las cachés y qué
+   proveedores están configurados (solo `true`/`false`, nunca las claves). `yourIp` es la IP
+   que el servidor ve para ti: si es tu IP pública, `TRUST_PROXY` está bien configurado.
+4. **Registros:** en la pestaña de logs del servicio en Koyeb, busca líneas como
+   `[stream] series tt7441658:1:1: no streams (BLOCKED: …)` o
+   `Blocked by an anti-bot challenge (Cloudflare)`. Los registros nunca muestran el token ni
+   enlaces firmados.
+
+---
+
 <a id="configurar-api"></a>
 
 ## 🔑 Configurar TMDB y TVDB
@@ -476,6 +596,8 @@ RELATIONS_ENABLED=true
 
 Después de cambiar `.env`, **reinicia** JKAnimeNuvio (Ctrl + C y `npm start`).
 
+<a id="todas-las-variables"></a>
+
 ### Todas las variables
 
 | Variable | Por defecto | Para qué sirve |
@@ -500,6 +622,13 @@ Después de cambiar `.env`, **reinicia** JKAnimeNuvio (Ctrl + C y `npm start`).
 | `JK_CONCURRENCY` | `3` | Peticiones simultáneas a JKAnime en total (todas las peticiones de Nuvio). |
 | `HTTP_MAX_PER_HOST`, `HTTP_MAX_CONCURRENCY` | `4`, `16` | Peticiones simultáneas por servidor y en total. |
 | `STREAM_PROBE` | `false` | `true` comprueba cada enlace antes de mostrarlo (lista HLS o 1 byte del MP4). Más lento. |
+| `ADDON_TOKEN` | *(vacío)* | Si se define, el addon solo responde bajo `/{ADDON_TOKEN}/…`; sin él, `404` (salvo `/health`). Obligatoria en la nube. Solo letras, números y `- _ . ~`. |
+| `RATE_LIMIT_PER_MIN` | *(vacío)* | Peticiones máximas por IP y minuto (`429` al superarlo). Sin definir, sin límite. |
+| `TRUST_PROXY` | *(vacío)* | Detrás de un proxy (Koyeb): `true`, un número de saltos o subredes. Hace que el límite use la IP real del cliente. |
+| `PUBLIC_URL` | *(vacío)* | Dirección pública (`https://…`) que muestra la página `/`. Sin definir, se usan `X-Forwarded-Proto`/`X-Forwarded-Host` o la petición. |
+| `STATUS_ENABLED` | `false` | `true` activa `/status` (bajo el token si existe): versión, memoria, cachés, proveedores y último resultado de JKAnime. |
+| `CACHE_MAX_ENTRIES` | *(vacío)* | Máximo de entradas de cada caché en memoria (solo reduce los máximos internos, de 500 a 5000). |
+| `SHUTDOWN_TIMEOUT_MS` | `10000` | Tiempo máximo para terminar las peticiones en curso al detener el servidor. |
 
 Si una credencial falta, es incorrecta o el servicio no responde, ese proveedor se omite y los
 demás siguen funcionando.
@@ -826,6 +955,8 @@ JKAnime está detrás de Cloudflare, que bloquea muchas conexiones de **VPN, pro
 en la nube**.
 
 - Ejecuta JKAnimeNuvio desde tu conexión normal de casa o desde los datos móviles, sin VPN.
+- En **Koyeb** u otra nube, `/{token}/status` muestra `"result": "BLOCKED"` cuando ocurre esto
+  (ver [Despliegue en Koyeb](#koyeb)). Prueba otra región o vuelve a Termux/tu computadora.
 - JKAnimeNuvio **no intenta saltarse** esta protección. Si tu conexión está bloqueada, no podrá
   obtener enlaces desde ella.
 
@@ -957,7 +1088,7 @@ JKAnimeNuvio incluye dos tipos de comprobaciones. **No son lo mismo**:
 npm test
 ```
 
-Ejecuta 145 pruebas en unos segundos, sin conexión. Entre otros casos, cubren:
+Ejecuta 167 pruebas en unos segundos, sin conexión. Entre otros casos, cubren:
 - Una matriz de identificación: Ao Ashi T1 y T2, Rich Girl Caretaker, Koori no Jouheki T1 y T2,
   Black Clover, Gensou Suikoden, remakes, títulos muy parecidos, OVAs, películas y episodios
   inexistentes.
@@ -965,6 +1096,8 @@ Ejecuta 145 pruebas en unos segundos, sin conexión. Entre otros casos, cubren:
   tiempos límite y registros sin credenciales.
 - El HTML real de JKAnime (búsqueda, ficha y episodio, archivados en 2026).
 - Errores de autenticación, fuentes caídas y formato de los streams para Nuvio.
+- Despliegue en la nube: token, límite por IP, `/status`, URL pública tras un proxy, errores sin
+  detalles internos y apagado limpio.
 
 Todas deben terminar en `fail 0`. Se ejecutan también automáticamente en GitHub Actions con
 Node.js 22 y 24.
@@ -1122,8 +1255,12 @@ reproducción.
 |---|---|
 | `GET /manifest.json`, `GET /{config}/manifest.json` | Manifiesto (`resources: [stream]`, `catalogs: []`) |
 | `GET /stream/{type}/{id}.json` (opcionalmente con `{config}/` delante) | `{ "streams": [...] }` |
-| `GET /health` | `{ "ok": true }` |
+| `GET /health` | `{ "ok": true }` (siempre libre, sin llamadas externas) |
 | `GET /` | Página con la URL de instalación |
+| `GET /status` | Estado de la instancia (solo con `STATUS_ENABLED=true`) |
+
+Con `ADDON_TOKEN`, todas las rutas salvo `/health` van precedidas de `/{ADDON_TOKEN}`
+(por ejemplo `/{ADDON_TOKEN}/{config}/stream/{type}/{id}.json`); sin él, `404`.
 
 **IDs admitidos:** `tt…:T:E`, `tmdb:ID:T:E`, `tvdb:ID:T:E`, `kitsu:ID:E`, `mal:ID:E`,
 `anilist:ID:E`, y películas `tt…` / `tmdb:ID`.
@@ -1132,8 +1269,11 @@ reproducción.
 
 ```text
 index.js                        Arranque: lee .env e inicia el servidor
+Dockerfile                      Imagen de producción (Koyeb, Docker)
 lib/
-├── app.js                      Servidor HTTP (Express): rutas, CORS y caché de respuestas
+├── server.js                   Arranque y apagado limpio (SIGTERM/SIGINT)
+├── app.js                      Servidor HTTP (Express): rutas, token, límite, CORS y caché de respuestas
+├── status.js                   /status: versión, memoria, cachés, proveedores, estado de JKAnime
 ├── stremio/                    Protocolo de addons de Stremio
 │   ├── manifest.js             Manifiesto stream-only (resources: [stream], catalogs: [])
 │   └── streams.js              Objetos stream (MP4/HLS, cabeceras, orden, sin duplicados)
@@ -1155,7 +1295,9 @@ lib/
     ├── errors.js               Códigos de error comunes
     ├── expiry.js               Caducidad declarada de enlaces firmados
     ├── context.js              Cancelación y traza por petición (AsyncLocalStorage)
-    └── limiter.js              Límite de concurrencia
+    ├── limiter.js              Límite de concurrencia
+    ├── ratelimit.js            Límite de peticiones por IP (RATE_LIMIT_PER_MIN)
+    └── upstream.js             Último resultado de las peticiones a JKAnime (OK, BLOCKED, error)
 test/                           Pruebas (node:test) y datos de prueba (fixtures/)
 test-support/                   Red simulada (helpers.js) y casos del banco de evaluación
 scripts/diagnose.js             Diagnóstico paso a paso de un ID (npm run diagnose)
@@ -1233,4 +1375,6 @@ licencia.
 >   [condiciones de uso](https://thetvdb.com/api-information).
 > - JKAnimeNuvio **no aloja ni distribuye vídeos**: solo localiza enlaces que JKAnime ya publica.
 >   Cada usuario es responsable de cumplir la legislación de su país.
-> - El proyecto es **self-hosted** por diseño: no existe ni se ofrece un servidor público.
+> - El proyecto es **self-hosted** por diseño: no existe ni se ofrece un servidor público. Cada
+>   persona ejecuta su propia instancia (en su dispositivo o, de forma personal y con token, en
+>   la nube).
