@@ -1,0 +1,40 @@
+# Render Blueprint: instancia personal de JKAnimeNuvio en el plan gratuito.
+# Guía paso a paso: README, sección "Despliegue en Render".
+# Referencia: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: jkanimenuvio
+    runtime: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    # Equivale al antiguo "autoDeploy: true" (obsoleto): redespliega con cada commit en main.
+    autoDeployTrigger: commit
+    # PORT no se define: Render lo asigna (10000 por defecto) y el servidor lo lee de $PORT.
+    envVars:
+      # Valor aleatorio generado por Render al crear el servicio (base64 de 256 bits).
+      - key: ADDON_TOKEN
+        generateValue: true
+      # Secretos opcionales: Render los pide al crear el Blueprint. Pueden quedar vacíos.
+      - key: TMDB_API_READ_TOKEN
+        sync: false
+      - key: TVDB_API_KEY
+        sync: false
+      - key: TVDB_SUBSCRIBER_PIN
+        sync: false
+      # Ajustes para 0,1 vCPU / 512 MB.
+      - key: STATUS_ENABLED
+        value: "true"
+      - key: RATE_LIMIT_PER_MIN
+        value: "60"
+      - key: TRUST_PROXY
+        value: "true"
+      - key: JK_CONCURRENCY
+        value: "2"
+      - key: HTTP_MAX_CONCURRENCY
+        value: "8"
+      - key: HTTP_MAX_PER_HOST
+        value: "3"
+      - key: CACHE_MAX_ENTRIES
+        value: "300"

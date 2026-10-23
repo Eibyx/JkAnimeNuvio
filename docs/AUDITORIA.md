@@ -342,3 +342,27 @@ que envía hoy.
 | N1 | Node 22/24 en CI; `engines >=22` | `.github/workflows/ci.yml`, `package.json` |
 
 Comparación de la identificación antes y después: [`EVALUACION.md`](EVALUACION.md).
+
+<a id="nube"></a>
+
+## Anexo: despliegue en la nube (base: v0.3.0, 2026-10-23)
+
+Revisión previa a la v0.4.0, centrada en exponer el addon a Internet desde una instancia de
+Koyeb (0,1 vCPU, 512 MB). Ordenado por prioridad.
+
+| ID | Tipo | Hallazgo | Riesgo | Estado |
+|---|---|---|---|---|
+| K1 | Seguridad | Sin autenticación: cualquiera que conozca la URL usa la instancia (consumo y riesgo de que JKAnime bloquee la IP) | Alto | Corregido: `ADDON_TOKEN` |
+| K2 | Bug | Escape `%` inválido → página de error de Express con *stack trace* y rutas internas (fuera de `NODE_ENV=production`) | Medio | Corregido, con prueba |
+| K3 | Despliegue | Sin manejo de `SIGTERM`: como PID 1 en un contenedor, Node lo ignora hasta el `SIGKILL`; peticiones cortadas en cada redespliegue | Medio | Corregido: `lib/server.js` |
+| K4 | Despliegue | Sin `Dockerfile` ni `.dockerignore` (riesgo de copiar `.env` a la imagen) | Medio | Corregido |
+| K5 | Visibilidad | No había forma rápida de saber si Cloudflare bloquea la IP del servidor | Medio | Corregido: `/status` |
+| K6 | Seguridad | Sin límite de peticiones entrantes | Medio | Corregido: `RATE_LIMIT_PER_MIN` (+ `TRUST_PROXY`) |
+| K7 | Despliegue | La página `/` muestra `http://` detrás del proxy TLS de Koyeb | Bajo | Corregido: `X-Forwarded-*` / `PUBLIC_URL` |
+| K8 | Memoria | Cachés acotadas pero con expulsión por orden de inserción y sin retirar antes las caducadas; máximos (hasta 5000) pensados para un dispositivo propio | Bajo | Corregido: LRU + `CACHE_MAX_ENTRIES` |
+| K9 | Recursos | Concurrencia por defecto (16 peticiones, 3 a JKAnime) alta para 0,1 vCPU | Bajo | Valores recomendados documentados; defaults sin cambios |
+| K10 | Seguridad | Riesgo residual de *DNS rebinding* (S3) más relevante en la nube (red interna del proveedor, metadatos) | Bajo | Sin cambios: los rangos internos y `169.254.169.254` ya se rechazan |
+
+Comprobado sin cambios: el servidor ya escuchaba en `PORT` y `0.0.0.0`; CORS abierto; los
+errores de los streams devuelven `streams: []` sin detalles; los registros no incluyen URLs de
+petición, credenciales ni enlaces firmados; `/health` no consulta servicios externos.

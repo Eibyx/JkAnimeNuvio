@@ -1,0 +1,25 @@
+# Configuración privada: las variables se definen en la plataforma, nunca en la imagen.
+.env
+.env.*
+!.env.example
+
+node_modules
+npm-debug.log*
+*.log
+
+# No hacen falta para ejecutar el addon.
+test
+test-support
+docs
+scripts
+.git
+.github
+.gitattributes
+.gitignore
+.dockerignore
+Dockerfile
+README.md
+CHANGELOG.md
+coverage
+.DS_Store
+render.yaml

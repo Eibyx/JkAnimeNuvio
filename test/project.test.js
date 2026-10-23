@@ -43,7 +43,7 @@ test("no old anime providers or original hosting in the code", () => {
 test("dependencies are exactly what the addon uses", () => {
   const pkg = JSON.parse(read("package.json"))
   assert.equal(pkg.name, "jkanimenuvio")
-  assert.equal(pkg.version, "0.3.0")
+  assert.equal(pkg.version, "0.4.1")
   assert.deepEqual(Object.keys(pkg.dependencies).sort(), ["cheerio", "dotenv", "express", "unpacker"])
   assert.equal(pkg.devDependencies, undefined)
   // Every dependency is really required somewhere.

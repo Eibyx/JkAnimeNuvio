@@ -1,5 +1,100 @@
 # Historial de versiones
 
+## ☁️ JKAnimeNuvio v0.4.1 — Despliegue en el plan gratuito de Render
+
+Koyeb cerró su plan gratuito a usuarios nuevos y Hugging Face cobra por los Spaces con Docker
+(octubre de 2026). La guía de la nube pasa a **[Render](README.md#render)**, cuyo plan gratuito
+admite servicios Docker. Sin variables nuevas, el comportamiento local no cambia.
+
+### ☁️ Render
+
+- **`render.yaml`** (*Blueprint*): servicio web Docker en el plan `free`, rama `main`, health
+  check `/health`, redespliegue con cada commit (`autoDeployTrigger: commit`, el sustituto
+  actual de `autoDeploy`), `ADDON_TOKEN` generado por Render, claves de TMDB/TVDB opcionales
+  (`sync: false`) y los valores recomendados para 0,1 vCPU / 512 MB.
+- Botón **Deploy to Render** y guía paso a paso desde el teléfono en el README: dónde ver el
+  token, cómo poner las claves, URL `https://<app>.onrender.com/<TOKEN>/manifest.json`,
+  comprobaciones tras desplegar y qué hacer si JKAnime bloquea la IP (Termux, o Termux con
+  `cloudflared tunnel`).
+- Cómo evitar que el plan gratuito duerma el servicio (15 min sin tráfico) con
+  [cron-job.org](https://cron-job.org/) visitando `/health` cada 10 minutos.
+- `Dockerfile`: puerto por defecto 10000 (el de Render) en lugar de 8000; Render define `PORT`
+  al ejecutar y el `HEALTHCHECK` lo lee de `process.env.PORT`.
+
+### 🐛 Correcciones
+
+- **`ADDON_TOKEN` generado por Render rechazado:** `generateValue` produce base64 estándar
+  (con `+`, `/` y `=`) y la validación solo admitía letras, números y `- _ . ~`, así que el
+  servidor se negaba a arrancar. Ahora el token se acepta tal cual (un `/` interno ocupa varios
+  segmentos de la ruta) o codificado con `%`, siempre con comparación en tiempo constante.
+
+### ✅ Comprobado
+
+- 170 pruebas automatizadas, incluidas las cabeceras del proxy de Render (`X-Forwarded-Proto`,
+  `X-Forwarded-For` con la IP del cliente primero): página `/` en HTTPS, IP real en `/status` y
+  límite por IP independiente para cada cliente.
+- El `Dockerfile` se comprobó reproduciendo su contenido (dependencias de producción, arranque
+  en el puerto 10000, `HEALTHCHECK`, apagado con `SIGTERM`), no con `docker build`.
+
+## ☁️ JKAnimeNuvio v0.4.0 — Instancia personal en la nube (Koyeb)
+
+Ahora puedes desplegar **tu propia instancia** en Koyeb (sustituido por Render en v0.4.1) (plan gratuito:
+0,1 vCPU, 512 MB) además de usarla en Termux o en tu computadora. Sigue sin existir un servidor
+público. **Todo lo nuevo es opcional:** sin las variables nuevas, el addon se comporta igual que
+en v0.3.0. Hallazgos de la auditoría previa en
+[`docs/AUDITORIA.md`](docs/AUDITORIA.md#nube).
+
+### ☁️ Despliegue
+
+- **`Dockerfile`** de producción (`node:22-alpine`, `npm ci --omit=dev`, usuario sin
+  privilegios, `NODE_ENV=production`, `HEALTHCHECK` a `/health`) y **`.dockerignore`** (sin
+  `.env`, pruebas, documentación ni `.git`).
+- **Apagado limpio** con `SIGTERM`/`SIGINT`: termina las peticiones en curso y sale con código 0
+  (máximo `SHUTDOWN_TIMEOUT_MS`, 10 s). Antes, como proceso principal de un contenedor, el
+  servidor ignoraba `SIGTERM` hasta que la plataforma lo mataba.
+- La página `/` muestra la dirección **HTTPS** correcta detrás de un proxy
+  (`X-Forwarded-Proto`/`X-Forwarded-Host`) o la de `PUBLIC_URL`.
+- `/health` responde al instante sin consultar servicios externos ni pedir token.
+
+### 🔒 Seguridad en Internet
+
+- **`ADDON_TOKEN`:** el manifiesto, los streams (también con configuración, como
+  `numbering=tmdb&mapping=absolute`), la página de instalación y `/status` solo responden bajo
+  `/{ADDON_TOKEN}/…`; sin el token, `404`. Comparación en tiempo constante; el token nunca
+  aparece en los registros.
+- **`RATE_LIMIT_PER_MIN`:** límite sencillo de peticiones por IP (en memoria), con `429` y
+  `Retry-After`. **`TRUST_PROXY`** para usar la IP real del cliente detrás de Koyeb.
+- CORS sigue abierto, como exige el protocolo de addons de Stremio.
+
+### 📈 Recursos (0,1 vCPU / 512 MB)
+
+- **Cachés en memoria con expulsión LRU:** primero las entradas caducadas y luego las menos
+  usadas. `CACHE_MAX_ENTRIES` reduce el máximo de todas.
+- Valores recomendados para Koyeb documentados en el README (`JK_CONCURRENCY=2`,
+  `HTTP_MAX_CONCURRENCY=8`, `HTTP_MAX_PER_HOST=3`, `CACHE_MAX_ENTRIES=300`). Los valores por
+  defecto no cambian.
+- **`/status`** (`STATUS_ENABLED=true`, bajo el token): versión, tiempo en marcha, memoria,
+  tamaño de las cachés, proveedores configurados y el **último resultado de JKAnime** (`OK`,
+  `BLOCKED` o error), para saber al momento si Cloudflare bloquea la IP del servidor. Sin claves,
+  sin token y sin enlaces.
+
+### 🐛 Correcciones
+
+- Una URL con un escape `%` inválido (p. ej. `/%E0%A4%A/manifest.json`) devolvía la página de
+  error de Express con el **stack trace y rutas internas** del servidor. Ahora responde
+  `{"error":"bad request"}` (400) sin detalles, en cualquier entorno.
+- La caché expulsaba por orden de inserción (la entrada más usada podía salir la primera) y no
+  retiraba antes las caducadas.
+
+### ⚠️ Limitaciones
+
+- **Cloudflare puede bloquear la IP de Koyeb.** El addon lo informa (`/status`, registros) y
+  **no intenta eludirlo**.
+- `TRUST_PROXY=true` toma la primera IP de `X-Forwarded-For`, que un cliente puede falsear para
+  esquivar el límite por IP. La protección real es el token.
+- El `Dockerfile` se comprobó reproduciendo su contenido (dependencias de producción, arranque,
+  `HEALTHCHECK`, apagado), no con `docker build` en esta versión.
+
 ## 🎌 JKAnimeNuvio v0.3.0 — Identificación inteligente, seguridad y confiabilidad
 
 Actualización centrada en **encontrar el anime correcto** (también con títulos japoneses muy
